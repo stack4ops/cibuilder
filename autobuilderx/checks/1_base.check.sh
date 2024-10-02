@@ -1,5 +1,11 @@
 #!/bin/sh
 
+# only check in scheduled pipelines not commits or other triggers
+if [ "${pipeline_env}" = "ci" ] && [ "${CI_PIPELINE_SOURCE:-}" != "scheduled" ]; then
+  log 7 "base.check only in scheduled ci pipeline or local"
+  return 18
+fi
+
 # layers of base_image check in local_only mode is not possible 
 # because layers are not preserved in docker storage
 if [ "${local_only}" = "1" ]; then
