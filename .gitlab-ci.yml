@@ -2,14 +2,19 @@
 workflow:
   rules:
     # Do not create a pipline on merge request
+    # For dependency bots like renovate merge_requests_event should be allowed for pipeline triggering
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
     # Create a pipline on schedules
     - if: $CI_PIPELINE_SOURCE == "schedule"
     # Create a pipline on web "Run pipline"
-    - if: $CI_PIPELINE_SOURCE == "web"
-    # Create a pipline on commits on the default branch (latest)
-    - if: $CI_COMMIT_BRANCH == "$CI_DEFAULT_BRANCH"
+    - if: $CI_PIPELINE_SOURCE == "web" 
+    # The default is to trigger the pipeline on every commit push event
+    # You can exclude specific branches from triggering on push events
+    # - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
+    #   when: never
+    # Create a pipline on every push commit
+    - if: $CI_PIPELINE_SOURCE == "push"
 
 stages:
   - check
@@ -23,9 +28,8 @@ stages:
       paths:
         - cache/
   variables:
-    AUTOBUILDERX_REF: "main"
+    AUTOBUILDERX_REF: "feature_branch_sn"
     AUTOBUILDERX_REF_FILE: $AUTOBUILDERX_REF
-    STAGE: "0"
   before_script:
     - |
       curl -L -s "https://gitlab.com/eqsoft-appstack/autobuilderx/-/archive/${AUTOBUILDERX_REF}/autobuilderx-${AUTOBUILDERX_REF_FILE}.tar.gz" | tar xzf - --strip-components=1 "autobuilderx-${AUTOBUILDERX_REF_FILE}/bin"
@@ -34,47 +38,23 @@ stages:
   tags:
     - buildx
   resource_group: buildx
-  rules:
-    - if: $STAGE == "0"
-      when: never
-    # Only run on commti if somthing changed
-    - if: $CI_COMMIT_BRANCH == "$CI_DEFAULT_BRANCH"
-      changes:
-        - Containerfile
-        - tests/*
-        - assets/**/*
-      when: on_success
-    - when: on_success
 
 check:
   stage: check
-  variables:
-    STAGE: $CHECK_STAGE
-  script: "autobuilderx -s check -vvvv"
+  script: "autobuilderx -s check"
   extends: .prepare
-  rules:
-    - if: $STAGE == "0"
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "push"
-      when: never
-    - when: on_success
+
 build:
   stage: build
-  variables:
-    STAGE: $BUILD_STAGE
   script: "autobuilderx -s build"
   extends: .prepare
 
 test:
   stage: test
   script: "autobuilderx -s test"
-  variables:
-    STAGE: $TEST_STAGE
   extends: .prepare
 
 deploy:
   stage: deploy
   script: "autobuilderx -s deploy"
   extends: .prepare
-  variables:
-    STAGE: $DEPLOY_STAGE
