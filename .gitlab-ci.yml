@@ -28,7 +28,7 @@ stages:
       paths:
         - cache/
   variables:
-    AUTOBUILDERX_REF: "feature_branch_sn"
+    AUTOBUILDERX_REF: "stable"
     AUTOBUILDERX_REF_FILE: $AUTOBUILDERX_REF
   before_script:
     - |
