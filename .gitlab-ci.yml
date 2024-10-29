@@ -12,8 +12,8 @@ workflow:
   rules:
     # Do not create a pipline on merge request
     # For dependency bots like renovate merge_requests_event should be allowed for pipeline triggering
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
+    #- if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    #  when: never
     # Create a pipline on schedules
     - if: $CI_PIPELINE_SOURCE == "schedule"
     # Create a pipline on web "Run pipline"
