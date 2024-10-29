@@ -44,8 +44,6 @@ stages:
       curl -L -s "https://gitlab.com/eqsoft-appstack/autobuilderx/-/archive/${AUTOBUILDERX_REF}/autobuilderx-${AUTOBUILDERX_REF_FILE}.tar.gz" | tar xzf - --strip-components=1 "autobuilderx-${AUTOBUILDERX_REF_FILE}/bin"
       chmod -R 755 bin
       export PATH=$PATH:$(pwd)/bin
-  tags:
-    - buildx
   resource_group: buildx
 
 check:
