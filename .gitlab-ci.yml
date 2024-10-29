@@ -1,4 +1,13 @@
 ---
+image: docker.io/eqsoft4/dockerx:${DOCKER_IMAGE_VERSION}
+services:
+  - name: docker.io/library/docker:${DOCKER_IMAGE_VERSION}-dind
+    alias: docker
+
+variables:
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_DRIVER: overlay2
+
 workflow:
   rules:
     # Do not create a pipline on merge request
@@ -8,13 +17,13 @@ workflow:
     # Create a pipline on schedules
     - if: $CI_PIPELINE_SOURCE == "schedule"
     # Create a pipline on web "Run pipline"
-    - if: $CI_PIPELINE_SOURCE == "web" 
+    # - if: $CI_PIPELINE_SOURCE == "web" 
     # The default is to trigger the pipeline on every commit push event
     # You can exclude specific branches from triggering on push events
     # - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
     #   when: never
     # Create a pipline on every push commit
-    - if: $CI_PIPELINE_SOURCE == "push"
+    # - if: $CI_PIPELINE_SOURCE == "push"
 
 stages:
   - check
