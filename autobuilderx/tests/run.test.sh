@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # edit your test conditions
-if ! docker_run_output=$(docker run --rm --entrypoint /usr/bin/uname --name "${test_container_name:?}" "${test_image:?}" -a); then
+if ! docker_run_output=$(docker run --rm $docker_run_options --entrypoint /usr/bin/uname --name "${test_container_name:?}" "${test_image:?}" -a); then
   log 3 "Test failed: Container did not start successfully!"
   docker logs -t "${test_container_name}"
   exit 1
