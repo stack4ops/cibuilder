@@ -18,6 +18,11 @@ layers_base_image_cache="${cache_folder:-/tmp}/base_image_layers_${rand}.json"
 layers_target_image_cache="${cache_folder:-/tmp}/target_image_layers_${rand}.json"
 layers_intersection="${cache_folder:-/tmp}/layers_intersection_${rand}.json"
 
+tls_verify=''
+if [ "${insecure_tls:?}" = "1" ]; then
+    tls_verify="--tls-verify=false"
+fi
+
 clean_up() {
   if [ -f "${layers_base_image_cache}" ]; then
     rm "${layers_base_image_cache}"
@@ -31,9 +36,9 @@ clean_up() {
 }
 
 if [ -n "${base_registry_user:-}" ] && [ -n "${base_registry_pass:-}" ]; then
-  ret=$(skopeo inspect --creds "${base_registry_user}:${base_registry_pass}" "docker://${base_image:?}:${base_tag:?}")
+  ret=$(skopeo inspect "${tls_verify}" --creds "${base_registry_user}:${base_registry_pass}" "docker://${base_image:?}:${base_tag:?}")
 else
-  ret=$(skopeo inspect "docker://${base_image:?}:${base_tag:?}")
+  ret=$(skopeo inspect "${tls_verify}" "docker://${base_image:?}:${base_tag:?}")
 fi
 
 status=$?
@@ -49,9 +54,9 @@ fi
 echo $ret | jq '.Layers' >"${layers_base_image_cache}"
 
 if [ -n "${target_registry_user:-}" ] && [ -n "${target_registry_pass:-}" ]; then
-  ret=$(skopeo inspect --creds "${target_registry_user}:${target_registry_pass}" "docker://${target_image:?}:${target_tag:?}")
+  ret=$(skopeo inspect "${tls_verify}" --creds  "${target_registry_user}:${target_registry_pass}" "docker://${target_image:?}:${target_tag:?}")
 else
-  ret=$(skopeo inspect "docker://${target_image:?}:${target_tag:?}")
+  ret=$(skopeo inspect "${tls_verify}" "docker://${target_image:?}:${target_tag:?}")
 fi
 
 status=$?
