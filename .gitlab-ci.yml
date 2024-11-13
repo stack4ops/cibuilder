@@ -10,20 +10,25 @@ variables:
 
 workflow:
   rules:
-    # Do not create a pipline on merge request
-    # For dependency bots like renovate merge_requests_event should be allowed for pipeline triggering
-    #- if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    #  when: never
+    # Trigger rules:
+    # The default CI_PIPELINE_SOURCE trigger is schedule
+    # Edit or comment in other trigger below
+
     # Create a pipline on schedules
     - if: $CI_PIPELINE_SOURCE == "schedule"
-    # Create a pipline on web "Run pipline"
-    # - if: $CI_PIPELINE_SOURCE == "web" 
-    # The default is to trigger the pipeline on every commit push event
-    # You can exclude specific branches from triggering on push events
-    # - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
-    #   when: never
+
     # Create a pipline on every push commit
     # - if: $CI_PIPELINE_SOURCE == "push"
+
+    # Create a pipeline on merge_requests_event
+    # - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+    # Create a pipline on web "Run pipline"
+    # - if: $CI_PIPELINE_SOURCE == "web" 
+
+    # Example: Create pipeline on every push on every branch except main branch
+    # - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
+    #   when: never
 
 stages:
   - check
