@@ -1,12 +1,10 @@
 #!/bin/sh
 
-# edit your test conditions
-if ! docker_run_output=$(docker run --rm $docker_run_options --entrypoint /bin/uname --name "${test_container_name:?}" "${test_image:?}" -a); then
-  log 3 "Test failed: Container did not start successfully!"
-  docker logs -t "${test_container_name}"
+ret=$(docker run --rm $docker_run_options --name $test_container_name $test_image docker buildx version | grep "github.com/docker/buildx")
+
+if [ "$?" != "0" ] || [ -z "$ret" ] ; then
+  log 3 "Test failed!"
   exit 1
 fi
 
-echo "$docker_run_output"
-
-log 5 "Test successfull: Container did start"
+log 5 "detected buildx version in dockerx image: $ret"
