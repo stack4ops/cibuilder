@@ -1,5 +1,5 @@
 ---
-image: docker.io/eqsoft4/dockerx:${DOCKER_IMAGE_VERSION}
+image: ${DOCKER_IMAGE}:${DOCKER_IMAGE_VERSION}
 services:
   - name: docker.io/library/docker:${DOCKER_IMAGE_VERSION}-dind
     alias: docker
