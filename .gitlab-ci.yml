@@ -46,7 +46,7 @@ stages:
     AUTOBUILDERX_REF_FILE: $AUTOBUILDERX_REF
   before_script:
     - |
-      curl -L -s "https://gitlab.com/eqsoft-appstack/autobuilderx/-/archive/${AUTOBUILDERX_REF}/autobuilderx-${AUTOBUILDERX_REF_FILE}.tar.gz" | tar xzf - --strip-components=1 "autobuilderx-${AUTOBUILDERX_REF_FILE}/bin"
+      curl -L -s "${AUTOBUILDERX_URL}/${AUTOBUILDERX_REF}/autobuilderx-${AUTOBUILDERX_REF_FILE}.tar.gz" | tar xzf - --strip-components=1 "autobuilderx-${AUTOBUILDERX_REF_FILE}/bin"
       chmod -R 755 bin
       export PATH=$PATH:$(pwd)/bin
   resource_group: buildx
