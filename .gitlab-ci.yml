@@ -11,7 +11,7 @@ variables:
   AUTOBUILDERX_URL: "${AUTOBUILDERX_URL:-https://gitlab.com/stack4ops/public/autobuilderx/-/archive}"
   AUTOBUILDERX_REF: "${AUTOBUILDERX_REF:-stable}"
 
-image: "${DOCKERX_IMAGE}"
+image: "${DOCKERX_IMAGE}:${DOCKERX_REF}"
 services:
   - name: "${DIND_IMAGE}:${DIND_REF}"
     alias: docker
