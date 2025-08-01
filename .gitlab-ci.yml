@@ -1,28 +1,22 @@
 ---
 variables:
-  # Fallbacks, falls der Benutzer keine CI/CD-Variablen wie CI_DOCKER_REF setzt
-  DEFAULT_DOCKER_REF: "28.3.3"
-
-  # "DOCKER_REF" nimmt CI_DOCKER_REF (vom Benutzer), sonst DEFAULT
-  DOCKER_REF: "$CI_DOCKER_REF"
-  DOCKER_REF_FINAL: "${DOCKER_REF:-$DEFAULT_DOCKER_REF}"
-
-  # Analog für das Image
-  DOCKERX_IMAGE: "${CI_DOCKERX_IMAGE:-docker.io/stack4ops/dockerx}"
-  DOCKERX_REF: "${CI_DOCKERX_REF:-$DOCKER_REF_FINAL}"
-
+  
+  CI_DOCKERX_IMAGE: "docker.io/stack4ops/dockerx"
+  CI_DOCKER_REF: "28.3.3"
+  
   # Für dind
-  DIND_IMAGE: "${CI_DIND_IMAGE:-docker.io/library/docker}"
-  DIND_REF: "${CI_DIND_REF:-${DOCKER_REF_FINAL}-dind}"
+  CI_DIND_IMAGE: "docker.io/library/docker"
+  CI_DIND_REF: "${CI_DOCKER_REF}-dind"
+  
+  CI_AUTOBUILDERX_URL: "https://gitlab.com/stack4ops/public/autobuilderx/-/archive"
+  CI_AUTOBUILDERX_REF: "stable"
 
   DOCKER_HOST: tcp://docker:2375/
   DOCKER_DRIVER: overlay2
-  AUTOBUILDERX_URL: "${AUTOBUILDERX_URL:-https://gitlab.com/stack4ops/public/autobuilderx/-/archive}"
-  AUTOBUILDERX_REF: "${AUTOBUILDERX_REF:-stable}"
 
-image: "${DOCKERX_IMAGE}:${DOCKERX_REF}"
+image: "${CI_DOCKERX_IMAGE}:${CI_DOCKERX_REF}"
 services:
-  - name: "${DIND_IMAGE}:${DIND_REF}"
+  - name: "${CI_DIND_IMAGE}:${CI_DIND_REF}"
     alias: docker
 workflow:
   rules:
@@ -59,7 +53,7 @@ stages:
         - cache/
   before_script:
     - |
-      curl -L -s "${AUTOBUILDERX_URL}/${AUTOBUILDERX_REF}/autobuilderx-${AUTOBUILDERX_REF}.tar.gz" | tar xzf - --strip-components=1 "autobuilderx-${AUTOBUILDERX_REF}/bin"
+      curl -L -s "${CI_AUTOBUILDERX_URL}/${CI_AUTOBUILDERX_REF}/autobuilderx-${CI_AUTOBUILDERX_REF}.tar.gz" | tar xzf - --strip-components=1 "autobuilderx-${CI_AUTOBUILDERX_REF}/bin"
       chmod -R 755 bin
       export PATH=$PATH:$(pwd)/bin
   resource_group: buildx
