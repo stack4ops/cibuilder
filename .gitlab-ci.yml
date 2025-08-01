@@ -1,11 +1,21 @@
 ---
 variables:
+  variables:
+  # Fallbacks, falls der Benutzer keine CI/CD-Variablen wie CI_DOCKER_REF setzt
   DEFAULT_DOCKER_REF: "28.3.3"
-  DOCKER_REF: "${DOCKER_REF:-$DEFAULT_DOCKER_REF}"
-  DOCKERX_IMAGE: "${DOCKERX_IMAGE:-docker.io/stack4ops/dockerx}"
-  DOCKERX_REF: "${DOCKERX_REF:-$DOCKER_REF}"
-  DIND_IMAGE: "${DIND_IMAGE:-docker.io/library/docker}"
-  DIND_REF: "${DIND_REF:-${DOCKER_REF}-dind}"
+
+  # "DOCKER_REF" nimmt CI_DOCKER_REF (vom Benutzer), sonst DEFAULT
+  DOCKER_REF: "$CI_DOCKER_REF"
+  DOCKER_REF_FINAL: "${DOCKER_REF:-$DEFAULT_DOCKER_REF}"
+
+  # Analog für das Image
+  DOCKERX_IMAGE: "${CI_DOCKERX_IMAGE:-docker.io/stack4ops/dockerx}"
+  DOCKERX_REF: "${CI_DOCKERX_REF:-$DOCKER_REF_FINAL}"
+
+  # Für dind
+  DIND_IMAGE: "${CI_DIND_IMAGE:-docker.io/library/docker}"
+  DIND_REF: "${CI_DIND_REF:-${DOCKER_REF_FINAL}-dind}"
+
   DOCKER_HOST: tcp://docker:2375/
   DOCKER_DRIVER: overlay2
   AUTOBUILDERX_URL: "${AUTOBUILDERX_URL:-https://gitlab.com/stack4ops/public/autobuilderx/-/archive}"
