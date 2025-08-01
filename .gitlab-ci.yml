@@ -1,13 +1,20 @@
 ---
-image: ${DOCKER_IMAGE}:${DOCKER_IMAGE_VERSION}
-services:
-  - name: docker.io/library/docker:${DOCKER_IMAGE_VERSION}-dind
-    alias: docker
-
 variables:
+  DEFAULT_DOCKER_REF: "28.3.3"
+  DOCKER_REF: "${DOCKER_REF:-$DEFAULT_DOCKER_REF}"
+  DOCKERX_IMAGE: "${DOCKERX_IMAGE:-docker.io/stack4ops/dockerx}"
+  DOCKERX_REF: "${DOCKERX_REF:-$DOCKER_REF}"
+  DIND_IMAGE: "${DIND_IMAGE:-docker.io/library/docker}"
+  DIND_REF: "${DIND_REF:-${DOCKER_REF}-dind}"
   DOCKER_HOST: tcp://docker:2375/
   DOCKER_DRIVER: overlay2
+  AUTOBUILDERX_URL: "${AUTOBUILDERX_URL:-https://gitlab.com/stack4ops/public/autobuilderx/-/archive}"
+  AUTOBUILDERX_REF: "${AUTOBUILDERX_REF:-stable}"
 
+image: "${DOCKERX_IMAGE}"
+services:
+  - name: "${DIND_IMAGE}:${DIND_REF}"
+    alias: docker
 workflow:
   rules:
     # Trigger rules:
@@ -41,12 +48,9 @@ stages:
     - key: cache-$CI_PIPELINE_ID
       paths:
         - cache/
-  variables:
-    AUTOBUILDERX_REF: "stable"
-    AUTOBUILDERX_REF_FILE: $AUTOBUILDERX_REF
   before_script:
     - |
-      curl -L -s "${AUTOBUILDERX_URL}/${AUTOBUILDERX_REF}/autobuilderx-${AUTOBUILDERX_REF_FILE}.tar.gz" | tar xzf - --strip-components=1 "autobuilderx-${AUTOBUILDERX_REF_FILE}/bin"
+      curl -L -s "${AUTOBUILDERX_URL}/${AUTOBUILDERX_REF}/autobuilderx-${AUTOBUILDERX_REF}.tar.gz" | tar xzf - --strip-components=1 "autobuilderx-${AUTOBUILDERX_REF}/bin"
       chmod -R 755 bin
       export PATH=$PATH:$(pwd)/bin
   resource_group: buildx
