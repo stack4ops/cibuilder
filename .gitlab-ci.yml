@@ -1,10 +1,10 @@
 ---
 variables:
   
-  CI_DOCKERX_IMAGE: "docker.io/stack4ops/dockerx"
   CI_DOCKER_REF: "28.3.3"
-  
-  # Für dind
+  CI_DOCKERX_IMAGE: "docker.io/stack4ops/dockerx"
+  CI_DOCKERX_REF: "$CI_DOCKER_REF"
+
   CI_DIND_IMAGE: "docker.io/library/docker"
   CI_DIND_REF: "${CI_DOCKER_REF}-dind"
   
