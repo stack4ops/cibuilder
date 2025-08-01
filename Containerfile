@@ -5,6 +5,9 @@ ARG HTTPS_PROXY=
 ARG http_proxy=
 ARG https_proxy=
 
+ARG SKOPEO_VERSION=1.18.0
+ARG TARGETARCH
+
 FROM ${BASE_IMAGE}:${BASE_TAG}
 
 USER root
@@ -17,12 +20,20 @@ apk add --no-cache \
 tzdata \
 curl \
 bash \
-skopeo \
 jq \
 git \
 iproute2 \
 socat
 EOF
 
-USER dockremap:dockremap
+# Mapping TARGETARCH -> skopeo release suffix
+RUN case "$TARGETARCH" in \
+        amd64) ARCH=amd64 ;; \
+        arm64) ARCH=arm64 ;; \
+    *) echo "Unsupported arch: $TARGETARCH" && exit 1 ;; \
+    esac && \
+    curl -L -o /usr/local/bin/skopeo \
+      "https://github.com/containers/skopeo/releases/download/v${SKOPEO_VERSION}/skopeo-static-linux-${ARCH}" && \
+    chmod +x /usr/local/bin/skopeo
 
+USER dockremap:dockremap
