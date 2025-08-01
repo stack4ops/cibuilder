@@ -21,7 +21,7 @@ jq \
 git \
 iproute2 \
 socat \
-skopeo=1.19.0-r1
+skopeo
 EOF
 
 USER dockremap:dockremap
