@@ -1,6 +1,5 @@
 ---
 variables:
-  variables:
   # Fallbacks, falls der Benutzer keine CI/CD-Variablen wie CI_DOCKER_REF setzt
   DEFAULT_DOCKER_REF: "28.3.3"
 
