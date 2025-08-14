@@ -29,15 +29,14 @@ EOF
 # see https://app.docker.com/accounts/stack4ops/cloud/integrations/gitlab
 # this will use a docker-buildx with cloud driver integrated 
 
-# overwrite usage of default buildx located in alpine: /usr/local/libexec/docker/cli-plugins/docker-buildx
-# download binary from https://github.com/docker/buildx-desktop/tags and use in /home/dockremap/.docker/cli-plugins/docker-buildx
+# replace buildx located in alpine: /usr/local/libexec/docker/cli-plugins/docker-buildx
+# download binary from https://github.com/docker/buildx-desktop/tags
 
 RUN <<EOF
 BUILDX_URL=$(curl -s https://raw.githubusercontent.com/docker/actions-toolkit/main/.github/buildx-lab-releases.json | jq -r ".latest.assets[] | select(endswith(\"linux-$TARGETARCH\"))")
-mkdir -vp /home/dockremap/.docker/cli-plugins/
-curl --silent -L --output /home/dockremap/.docker/cli-plugins/docker-buildx $BUILDX_URL
-chown -R dockremap:dockremap /home/dockremap/.docker
-chmod a+x /home/dockremap/.docker/cli-plugins/docker-buildx
+rm /usr/local/libexec/docker/cli-plugins/docker-buildx
+curl --silent -L --output /usr/local/libexec/docker/cli-plugins/docker-buildx $BUILDX_URL
+chmod a+x /usr/local/libexec/docker/cli-plugins/docker-buildx
 EOF
 
 USER dockremap:dockremap
