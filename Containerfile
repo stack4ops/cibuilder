@@ -12,8 +12,7 @@ ARG TARGETARCH=amd64
 USER root
 
 ENV TZ=Europe/Berlin
-# for tput colored debug infos
-ENV TERM=xterm
+
 # hadolint ignore=DL3018
 RUN <<EOF
 set -e
@@ -25,8 +24,7 @@ jq \
 git \
 iproute2 \
 socat \
-skopeo \
-ncurses
+skopeo
 EOF
 
 # see https://app.docker.com/accounts/stack4ops/cloud/integrations/gitlab
