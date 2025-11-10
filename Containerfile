@@ -7,6 +7,8 @@ ARG https_proxy=
 
 FROM ${BASE_IMAGE}:${BASE_TAG}
 
+ARG TARGETARCH=amd64
+
 USER root
 
 ENV TZ=Europe/Berlin
@@ -21,7 +23,21 @@ jq \
 git \
 iproute2 \
 socat \
-skopeo
+skopeo \
+ncurses
+EOF
+
+# see https://app.docker.com/accounts/stack4ops/cloud/integrations/gitlab
+# this will use a docker-buildx with cloud driver integrated 
+
+# replace buildx located in alpine: /usr/local/libexec/docker/cli-plugins/docker-buildx
+# download binary from https://github.com/docker/buildx-desktop/tags
+
+RUN <<EOF
+BUILDX_URL=$(curl -s https://raw.githubusercontent.com/docker/actions-toolkit/main/.github/buildx-lab-releases.json | jq -r ".latest.assets[] | select(endswith(\"linux-$TARGETARCH\"))")
+rm /usr/local/libexec/docker/cli-plugins/docker-buildx
+curl --silent -L --output /usr/local/libexec/docker/cli-plugins/docker-buildx $BUILDX_URL
+chmod a+x /usr/local/libexec/docker/cli-plugins/docker-buildx
 EOF
 
 USER dockremap:dockremap
