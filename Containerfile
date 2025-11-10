@@ -12,6 +12,8 @@ ARG TARGETARCH=amd64
 USER root
 
 ENV TZ=Europe/Berlin
+# for tput colored debug infos
+ENV TERM=xterm
 # hadolint ignore=DL3018
 RUN <<EOF
 set -e
