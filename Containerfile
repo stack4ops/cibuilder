@@ -23,7 +23,8 @@ jq \
 git \
 iproute2 \
 socat \
-skopeo
+skopeo \
+ncurses
 EOF
 
 # see https://app.docker.com/accounts/stack4ops/cloud/integrations/gitlab
