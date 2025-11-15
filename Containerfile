@@ -23,7 +23,6 @@ bash \
 jq \
 git \
 iproute2 \
-socat \
 skopeo
 EOF
 
