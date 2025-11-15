@@ -1,3 +1,3 @@
-# {PROJECT_NAME}
+# cibuilder
 
-This Containers build process is fueled by [autobuilderx](https://gitlab.com/eqsoft-appstack/autobuilderx)
+This Containers build process is fueled by [cibuilder](https://gitlab.com/stack4ops/cibuilder)
