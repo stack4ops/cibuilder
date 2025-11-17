@@ -2,14 +2,14 @@
 
 # only check in scheduled pipelines not commits or other triggers
 if [ "${pipeline_env}" = "ci" ] && [ "${CI_PIPELINE_SOURCE:-}" != "schedule" ]; then
-  log 7 "base.check only in schedule ci pipeline or local"
+  log 2 "base.check only in schedule ci pipeline or local"
   return 18
 fi
 
 # layers of base_image check in local_only mode is not possible 
 # because layers are not preserved in docker storage
 if [ "${local_only}" = "1" ]; then
-  log 5 "skip base.check in local_only mode"
+  log 2 "skip base.check in local_only mode"
   return 18
 fi
 
@@ -43,10 +43,10 @@ fi
 
 status=$?
 
-log 5 "status: $status"
+log 2 "status: $status"
 
 if [ "$status" -gt 0 ]; then
-  log 3 "cannot get base image ${base_image}:${base_tag}. Abort"
+  log 0 "cannot get base image ${base_image}:${base_tag}. Abort"
   clean_up
   return 1
 fi
@@ -61,10 +61,10 @@ fi
 
 status=$?
 
-log 5 "status: $status"
+log 1 "status: $status"
 
 if [ "$status" -gt 0 ]; then
-  log 4 "cannot get last target image ${target_image}:${target_tag}. Assume this is the first bild"
+  log 1 "cannot get last target image ${target_image}:${target_tag}. Assume this is the first bild"
   clean_up
   return 18
 fi
@@ -75,7 +75,7 @@ echo $ret | jq '.Layers' >"${layers_target_image_cache}"
 jq -s '.[0] - (.[0] - .[1])' "${layers_target_image_cache}" "${layers_base_image_cache}" >"${layers_intersection}"
 
 if [ "${verbosity:-7}" -gt 7 ]; then
-  log 7 "intersection of image layers"
+  log 2 "intersection of image layers"
   cat "$layers_intersection"
 fi
 
@@ -83,16 +83,16 @@ fi
 difference_base_image_layers=$(jq -s '.[0] - .[1] | length' "${layers_base_image_cache}" "${layers_intersection}")
 
 if [ "${verbosity:-7}" -gt 7 ]; then
-  log 7 "Difference between intersection and base_imaeg layers"
+  log 2 "Difference between intersection and base_imaeg layers"
   jq -s '.[0] - .[1]' "${layers_base_image_cache}" "${layers_intersection}"
 fi
 
 if [ "$difference_base_image_layers" -gt 0 ]; then
-  log 7 "found a difference in the base image layers, build new image"
+  log 2 "found a difference in the base image layers, build new image"
   clean_up
   return 18
 else
-  log 7 "found no difference in base image layers, cancel pipeline gracefully"
+  log 2 "found no difference in base image layers, cancel pipeline gracefully"
   clean_up
   if [ "${build_force}" = "1" ]; then
     return 42
