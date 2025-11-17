@@ -39,4 +39,4 @@ curl --silent -L --output /usr/local/libexec/docker/cli-plugins/docker-buildx $B
 chmod a+x /usr/local/libexec/docker/cli-plugins/docker-buildx
 EOF
 
-USER dockremap:dockremap
+USER rootless
