@@ -39,4 +39,9 @@ curl --silent -L --output /usr/local/libexec/docker/cli-plugins/docker-buildx $B
 chmod a+x /usr/local/libexec/docker/cli-plugins/docker-buildx
 EOF
 
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD []
 USER rootless
