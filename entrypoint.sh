@@ -2,7 +2,7 @@
 set -e
 
 # start rootless dockerd
-dockerd-rootless.sh &
+dockerd-entrypoint.sh &
 
 # Warten bis Docker Socket existiert
 DOCKER_SOCKET="/run/user/1000/docker.sock"
