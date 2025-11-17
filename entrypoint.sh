@@ -7,6 +7,8 @@ dockerd-entrypoint.sh &
 # Warten bis Docker Socket existiert
 DOCKER_SOCKET="/run/user/1000/docker.sock"
 export DOCKER_HOST="unix://${DOCKER_SOCKET}"
+export DOCKER_DRIVER="overlay2"
+export DOCKER_TLS_CERTDIR=
 
 echo "waiting for Docker Socket..."
 while [ ! -S "$DOCKER_SOCKET" ]; do
