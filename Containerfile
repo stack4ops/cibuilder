@@ -22,7 +22,6 @@ curl \
 bash \
 jq \
 git \
-iproute2 \
 skopeo
 EOF
 
@@ -39,9 +38,11 @@ curl --silent -L --output /usr/local/libexec/docker/cli-plugins/docker-buildx $B
 chmod a+x /usr/local/libexec/docker/cli-plugins/docker-buildx
 EOF
 
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+# add cibuilder user
+RUN <<EOF
+addgroup -g 1000 cibuilder
+adduser -D -G cibuilder -u 1000 cibuilder
+EOF
 
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD []
-USER rootless
+USER cibuilder
+ENV HOME=/home/cibuilder
