@@ -1,9 +1,9 @@
 ---
 variables:
   
-  CI_DOCKER_REF: "28.3.3"
-  CI_DOCKERX_IMAGE: "docker.io/stack4ops/dockerx"
-  CI_DOCKERX_REF: "$CI_DOCKER_REF"
+  CI_DOCKER_REF: "29.0.1"
+  CI_BUILDER_IMAGE: "docker.io/stack4ops/cibuilder"
+  CI_BUILDER_REF: "$CI_DOCKER_REF"
 
   CI_DIND_IMAGE: "docker.io/library/docker"
   CI_DIND_REF: "${CI_DOCKER_REF}-dind"
@@ -14,11 +14,9 @@ variables:
   DOCKER_HOST: tcp://docker:2375/
   DOCKER_DRIVER: overlay2
 
-#image: "${CI_DOCKERX_IMAGE}:${CI_DOCKERX_REF}"
-image: docker.io/stack4ops/cibuilder:29.0.1-cli
+image: "${CI_BUILDER_IMAGE}:${CI_BUILDER_REF}"
 services:
-  #- name: "${CI_DIND_IMAGE}:${CI_DIND_REF}"
-  - name: docker.io/library/docker:29.0.1-dind
+  - name: "${CI_DIND_IMAGE}:${CI_DIND_REF}"
     alias: docker
 workflow:
   rules:
