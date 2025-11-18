@@ -1,3 +1,6 @@
 # cibuilder
 
-This Containers build process is fueled by [cibuilder](https://gitlab.com/stack4ops/cibuilder)
+An extended docker:cli image with embedded cibuild libs.
+
+* non-root
+* runs with remote dockerd only
