@@ -14,9 +14,11 @@ variables:
   DOCKER_HOST: tcp://docker:2375/
   DOCKER_DRIVER: overlay2
 
-image: "${CI_DOCKERX_IMAGE}:${CI_DOCKERX_REF}"
+#image: "${CI_DOCKERX_IMAGE}:${CI_DOCKERX_REF}"
+image: docker.io/statck4ops/cibuilder:29.0.1-cli
 services:
-  - name: "${CI_DIND_IMAGE}:${CI_DIND_REF}"
+  #- name: "${CI_DIND_IMAGE}:${CI_DIND_REF}"
+  - name: docker.io/library/docker:29.0.1-dind
     alias: docker
 workflow:
   rules:
