@@ -2,8 +2,8 @@
 variables:
   
   CI_DOCKER_REF: "29.0.2"
-  CI_CUILDER_IMAGE: "docker.io/stack4ops/cibuilder"
-  CI_CUILDER_REF: "$CI_DOCKER_REF"
+  CIBUILDER_IMAGE: "docker.io/stack4ops/cibuilder"
+  CIBUILDER_REF: "${CI_DOCKER_REF}-cli"
 
   CI_DIND_IMAGE: "docker.io/library/docker"
   CI_DIND_REF: "${CI_DOCKER_REF}-dind"
@@ -11,7 +11,7 @@ variables:
   DOCKER_HOST: tcp://docker:2375/
   DOCKER_DRIVER: overlay2
 
-image: "${CI_BUILDER_IMAGE}:${CI_BUILDER_REF}"
+image: "${CIBUILDER_IMAGE}:${CIBUILDER_REF}"
 services:
   - name: "${CI_DIND_IMAGE}:${CI_DIND_REF}"
     alias: docker
