@@ -5,8 +5,8 @@ ARG HTTPS_PROXY=
 ARG http_proxy=
 ARG https_proxy=
 
-ARG CI_BUILD_URL=https://gitlab.com/stack4ops/public/cibuild/-/archive
-ARG CI_BUILD_REF=main
+ARG CIBUILDER_BIN_URL=https://gitlab.com/stack4ops/public/cibuild/-/archive
+ARG CIBUILDER_BIN_REF=main
 
 USER root
 
@@ -41,7 +41,7 @@ USER cibuilder
 
 RUN <<EOF
 cd /home/cibuilder
-curl -L -s "${CI_BUILD_URL}/${CI_BUILD_REF}/cibuild-${CI_BUILD_REF}.tar.gz" | tar xzf - --strip-components=1 "cibuild-${CI_BUILD_REF}/bin"
+curl -L -s "${CIBUILDER_BIN_URL}/${CIBUILDER_BIN_REF}/cibuild-${CIBUILDER_BIN_REF}.tar.gz" | tar xzf - --strip-components=1 "cibuild-${CIBUILDER_BIN_REF}/bin"
 chmod -R 755 bin
 EOF
 
