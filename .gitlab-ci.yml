@@ -1,16 +1,13 @@
 ---
 variables:
   
-  CI_DOCKER_REF: "29.0.1"
-  CI_BUILDER_IMAGE: "docker.io/stack4ops/cibuilder"
-  CI_BUILDER_REF: "$CI_DOCKER_REF"
+  CI_DOCKER_REF: "29.0.2"
+  CI_CUILDER_IMAGE: "docker.io/stack4ops/cibuilder"
+  CI_CUILDER_REF: "$CI_DOCKER_REF"
 
   CI_DIND_IMAGE: "docker.io/library/docker"
   CI_DIND_REF: "${CI_DOCKER_REF}-dind"
   
-  CI_AUTOBUILDERX_URL: "https://gitlab.com/stack4ops/public/autobuilderx/-/archive"
-  CI_AUTOBUILDERX_REF: "stable"
-
   DOCKER_HOST: tcp://docker:2375/
   DOCKER_DRIVER: overlay2
 
@@ -51,29 +48,26 @@ stages:
     - key: cache-$CI_PIPELINE_ID
       paths:
         - cache/
-  before_script:
-    - |
-      curl -L -s "${CI_AUTOBUILDERX_URL}/${CI_AUTOBUILDERX_REF}/autobuilderx-${CI_AUTOBUILDERX_REF}.tar.gz" | tar xzf - --strip-components=1 "autobuilderx-${CI_AUTOBUILDERX_REF}/bin"
-      chmod -R 755 bin
-      export PATH=$PATH:$(pwd)/bin
   resource_group: buildx
 
 check:
   stage: check
-  script: "autobuilderx -s check"
+  script: "cibuild -s check"
   extends: .prepare
 
 build:
   stage: build
-  script: "autobuilderx -s build"
+  script: "cibuild -s build"
   extends: .prepare
+  tags:
+    - saas-linux-large-amd64
 
 test:
   stage: test
-  script: "autobuilderx -s test"
+  script: "cibuild -s test"
   extends: .prepare
 
 deploy:
   stage: deploy
-  script: "autobuilderx -s deploy"
+  script: "cibuild -s deploy"
   extends: .prepare

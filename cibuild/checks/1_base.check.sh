@@ -61,7 +61,7 @@ fi
 
 status=$?
 
-log 1 "status: $status"
+log 2 "status: $status"
 
 if [ "$status" -gt 0 ]; then
   log 1 "cannot get last target image ${target_image}:${target_tag}. Assume this is the first bild"
@@ -74,15 +74,15 @@ echo $ret | jq '.Layers' >"${layers_target_image_cache}"
 # get the intersection of the two lists
 jq -s '.[0] - (.[0] - .[1])' "${layers_target_image_cache}" "${layers_base_image_cache}" >"${layers_intersection}"
 
-if [ "${verbosity:-7}" -gt 7 ]; then
-  log 2 "intersection of image layers"
+if [ "${ci_build_loglevel}" = "3" ]; then
+  log 3 "intersection of image layers"
   cat "$layers_intersection"
 fi
 
 # check if the intersection matches the base_image
 difference_base_image_layers=$(jq -s '.[0] - .[1] | length' "${layers_base_image_cache}" "${layers_intersection}")
 
-if [ "${verbosity:-7}" -gt 7 ]; then
+if [ "${ci_build_loglevel}" = "3" ]; then
   log 2 "Difference between intersection and base_imaeg layers"
   jq -s '.[0] - .[1]' "${layers_base_image_cache}" "${layers_intersection}"
 fi

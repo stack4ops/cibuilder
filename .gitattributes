@@ -1,4 +1,0 @@
-autobuilderx.cfg merge=ours
-Containerfile merge=ours
-tests/run.test.sh merge=ours
-autobuilderx/tests/run.test.sh merge=ours
