@@ -1,18 +1,18 @@
 ---
 variables:
-  
   CI_DOCKER_REF: "29.0.2"
 
-  CIBUILDER_IMAGE: "docker.io/stack4ops/cibuilder"
+  CIBUILDER_IMAGE: "${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/stack4ops/cibuilder"
   CIBUILDER_REF: "${CI_DOCKER_REF}-cli"
 
-  CI_DIND_IMAGE: "docker.io/library/docker"
+  CI_DIND_IMAGE: "${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/library/docker"
   CI_DIND_REF: "${CI_DOCKER_REF}-dind"
-  
+
   DOCKER_HOST: tcp://docker:2375/
   DOCKER_DRIVER: overlay2
 
 image: "${CIBUILDER_IMAGE}:${CIBUILDER_REF}"
+
 services:
   - name: "${CI_DIND_IMAGE}:${CI_DIND_REF}"
     alias: docker
@@ -55,7 +55,7 @@ check:
   stage: check
   script: "cibuild -s check"
   extends: .prepare
-
+  
 build:
   stage: build
   script: "cibuild -s build"

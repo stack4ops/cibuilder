@@ -1,4 +1,4 @@
-FROM docker.io/library/docker:cli
+FROM docker:cli
 
 ARG HTTP_PROXY=
 ARG HTTPS_PROXY=
