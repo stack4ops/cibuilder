@@ -27,6 +27,20 @@ git \
 skopeo
 EOF
 
+# add buildkit
+RUN <<EOF
+BUILDKIT_VERSION=$(curl -s https://api.github.com/repos/moby/buildkit/releases/latest | jq -r .tag_name)
+case "$TARGETARCH" in \
+    amd64) ARCH="amd64" ;; \
+    arm64) ARCH="arm64" ;; \
+    *) echo "Unsupported TARGETARCH: $TARGETARCH"; exit 1 ;;
+esac
+echo "https://github.com/moby/buildkit/releases/download/${BUILDKIT_VERSION}/buildkit-${BUILDKIT_VERSION}-linux-${ARCH}.tar.gz"
+curl -L "https://github.com/moby/buildkit/releases/download/${BUILDKIT_VERSION}/buildkit-${BUILDKIT_VERSION}.linux-${ARCH}.tar.gz" | tar -xz bin/buildctl -C /usr/local/bin --strip-components=1
+ls -lat /usr/local/bin
+chmod +x /usr/local/bin/buildctl
+EOF
+
 # add cibuilder user
 RUN <<EOF
 addgroup -g 1000 cibuilder
