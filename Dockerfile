@@ -27,21 +27,6 @@ git \
 skopeo
 EOF
 
-# install oras
-RUN <<EOF
-ORAS_VERSION=$(curl -s https://api.github.com/repos/oras-project/oras/releases/latest | grep tag_name | cut -d '"' -f 4 | sed 's/^v//')
-case "$TARGETARCH" in \
-    amd64) ARCH="amd64" ;; \
-    arm64) ARCH="arm64" ;; \
-    *) echo "Unsupported TARGETARCH: $TARGETARCH"; exit 1 ;;
-esac
-
-curl -L "https://github.com/oras-project/oras/releases/download/v${ORAS_VERSION}/oras_${ORAS_VERSION}_linux_${ARCH}.tar.gz" \
-  | tar -xz -C /usr/local/bin oras
-
-chmod 755 /usr/local/bin/oras
-EOF
-
 # add cibuilder user
 RUN <<EOF
 addgroup -g 1000 cibuilder
