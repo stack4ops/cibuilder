@@ -5,7 +5,7 @@ ARG HTTPS_PROXY=
 ARG http_proxy=
 ARG https_proxy=
 
-ARG TARGETARCH=amd64
+ARG TARGETARCH
 
 ARG CIBUILDER_BIN_URL=https://gitlab.com/stack4ops/public/cibuild/-/archive
 ARG CIBUILDER_BIN_REF=main
@@ -39,6 +39,18 @@ echo "https://github.com/moby/buildkit/releases/download/${BUILDKIT_VERSION}/bui
 curl -L "https://github.com/moby/buildkit/releases/download/${BUILDKIT_VERSION}/buildkit-${BUILDKIT_VERSION}.linux-${ARCH}.tar.gz" | tar -xz bin/buildctl -C /usr/local/bin --strip-components=1
 ls -lat /usr/local/bin
 chmod +x /usr/local/bin/buildctl
+EOF
+
+# add kubectl
+RUN <<EOF
+case "$TARGETARCH" in \
+    amd64) ARCH="amd64" ;; \
+    arm64) ARCH="arm64" ;; \
+    *) echo "Unsupported TARGETARCH: $TARGETARCH"; exit 1 ;;
+esac
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/${ARCH}/kubectl"
+chmod 755 kubectl 
+mv kubectl /usr/local/bin
 EOF
 
 # add cibuilder user
