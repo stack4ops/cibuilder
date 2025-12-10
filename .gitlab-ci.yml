@@ -1,6 +1,6 @@
 ---
 variables:
-  CI_DOCKER_REF: "29.0.2"
+  CI_DOCKER_REF: "29.1.2"
 
   CIBUILDER_IMAGE: "${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/stack4ops/cibuilder"
   CIBUILDER_REF: "${CI_DOCKER_REF}-cli"
