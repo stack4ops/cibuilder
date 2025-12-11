@@ -31,4 +31,4 @@ An image based on docker:cli for building container images in a gitlab pipeline 
 
     * If build pipeline succeeded or failed, send a notification to registered recipients
 
-    * After succeeded pipeline, there is only one manual action required for this specific build image that is referred in all .gitlab-ci.yaml files of image build repos in this group: Setting the group variable `CI_DOCKER_REF` to the new minortag. This is required because the referenced service docker:dind image should also be based on the same docker version.
+    * After succeeded pipeline, there is only one manual action required for this specific build image that is referenced in all .gitlab-ci.yaml files of image build repos in this group: Setting the group variable `CI_DOCKER_REF` to the new minortag. This is required because the referenced service docker:dind image should also be based on the same docker version.
