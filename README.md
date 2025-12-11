@@ -25,10 +25,46 @@ An image based on docker:cli for building container images in a gitlab pipeline 
 
 * The image builds and updates itself in a scheduled cibuild pipeline every week:
 
-    * checks if newer minortag for docker:cli base image exists.
+    ```
 
-    * If newer base image exists: trigger build, test and deploy stages otherwise cancel pipeline gracefully but NOT as failed pipeline because we don't want notifications for every cancellation event.
-
-    * If build pipeline succeeded or failed, send a notification to registered recipients
-
-    * After succeeded pipeline, there is only one manual action required for this specific build image that is referenced in all .gitlab-ci.yaml files of image build repos in this group: Setting the group variable `CI_DOCKER_REF` to the new minortag. This is required because the referenced service docker:dind image should also be based on the same docker version.
+                         ┌────────────────────────────┐
+                         │  Check latest minor tag    │
+                         │  for docker:cli base image │
+                         └──────────────┬─────────────┘
+                                        │
+                       ┌────────────────┴────────────────┐
+                       │                                 │
+          ┌────────────▼────────────┐         ┌──────────▼─────────┐
+          │ Newer minor tag exists? │    NO   │ No newer tag found │
+          └────────────┬────────────┘         └──────────┬─────────┘
+                       │                                 │
+                       │ YES                             │
+                       │                                 │
+        ┌──────────────▼─────────────┐          ┌────────▼─────────┐
+        │ Trigger build pipeline     │          │ Cancel pipeline  │
+        │ (build → test → deploy)    │──────────│ gracefully (not  │
+        └──────────────┬─────────────┘          │ marked as failed)│
+                       │                        └────────┬─────────┘
+                       │                                 │
+        ┌──────────────▼─────────────┐         ┌─────────▼──────────┐
+        │ Build pipeline succeeded?  │─────────│  Send notification │
+        └──────────────┬─────────────┘   YES   │  (success/failure) │
+                       │                       └──────────┬─────────┘
+                       │ NO                               │
+                       │                                  │
+        ┌──────────────▼─────────────┐                    │
+        │ Send failure notification  │<───────────────────┘
+        └──────────────┬─────────────┘
+                       │
+                       │
+        ┌──────────────▼───────────────────────────────────────────┐
+        │ After successful pipeline:                               │
+        │  Manual step required:                                   │
+        │  Update group variable CI_DOCKER_REF with new minor tag  |
+        |                                                          |  
+        |  This is required because the referenced service         |           
+        |  docker:dind image should also be based on the           |
+        |  same docker version.                                    |
+        │                                                          |
+        └──────────────────────────────────────────────────────────┘
+```    
