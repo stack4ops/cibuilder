@@ -1,9 +1,9 @@
 # cibuilder
-
+-------------------
 An image based on docker:cli for building container images in a gitlab pipeline with embedded cibuild libs (https://gitlab.com/stack4ops/public/cibuild).
 
 ## Image Customzing
-
+-------------------
 * Running as non-root
 
 * Pipeline stage requirements:
@@ -20,7 +20,7 @@ An image based on docker:cli for building container images in a gitlab pipeline 
     * Dynamic loading of external cibuild libs (CIBUILDER_BIN_URL and CIBUILDER_BIN_REF env vars). This will override the embedded cibuild libs. It is useful for debugging and development.
  
 ## Notes
-
+-------------------
 * For historical reasons, the image is based on docker:cli and includes requirements for all stages. In the future, it might also be useful to offer more specific and smaller images for Docker and Kubernetes environments and / or individual stages.
 
 * The image builds and updates itself in a scheduled cibuild pipeline every week:
