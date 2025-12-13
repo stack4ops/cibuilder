@@ -23,7 +23,9 @@ An image based on docker:cli for building container images in a gitlab pipeline 
 -------------------
 * For historical reasons, the image is based on docker:cli and includes requirements for all stages. In the future, it might also be useful to offer more specific and smaller images for Docker and Kubernetes environments and / or individual stages.
 
-* The image builds and updates itself in a scheduled cibuild pipeline every week:
+* Always fresh build to get latest components (weekly base image checks). 
+
+* The image builds and updates itself in a scheduled cibuild pipeline every week with disabled cache (use_cache=0). I accept the trade-offs of tying updates of the embedded components to the version cycle of the base docker:cli image:
 
     ```
 
