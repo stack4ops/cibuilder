@@ -29,6 +29,7 @@ EOF
 
 # add buildkit
 RUN <<EOF
+set -e
 BUILDKIT_VERSION=$(curl -s https://api.github.com/repos/moby/buildkit/releases/latest | jq -r .tag_name)
 case "$TARGETARCH" in \
     amd64) ARCH="amd64" ;; \
@@ -43,6 +44,7 @@ EOF
 
 # add kubectl
 RUN <<EOF
+set -e
 case "$TARGETARCH" in \
     amd64) ARCH="amd64" ;; \
     arm64) ARCH="arm64" ;; \
@@ -55,6 +57,7 @@ EOF
 
 # add cibuilder user
 RUN <<EOF
+set -e
 addgroup -g 1000 cibuilder
 adduser -D -G cibuilder -u 1000 cibuilder
 EOF
@@ -62,12 +65,14 @@ EOF
 # add entrypoint
 COPY ./cibuild_entrypoint.sh /usr/local/bin/
 RUN <<EOF
+set -e
 chmod 755 /usr/local/bin/cibuild_entrypoint.sh
 EOF
 
 USER cibuilder
 
 RUN <<EOF
+set -e
 cd /home/cibuilder
 curl -L -s "${CIBUILDER_BIN_URL}/${CIBUILDER_BIN_REF}/cibuild-${CIBUILDER_BIN_REF}.tar.gz" | tar xzf - --strip-components=1 "cibuild-${CIBUILDER_BIN_REF}/bin"
 chmod -R 755 bin
