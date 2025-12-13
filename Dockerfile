@@ -37,7 +37,6 @@ case "$TARGETARCH" in \
     *) echo "Unsupported TARGETARCH: $TARGETARCH"; exit 1 ;;
 esac
 curl -L "https://github.com/moby/buildkit/releases/download/${BUILDKIT_VERSION}/buildkit-${BUILDKIT_VERSION}.linux-${ARCH}.tar.gz" | tar -xz bin/buildctl -C /usr/local/bin --strip-components=1
-ls -lat /usr/local/bin
 chmod +x /usr/local/bin/buildctl
 EOF
 
