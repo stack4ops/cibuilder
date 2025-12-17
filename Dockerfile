@@ -53,6 +53,13 @@ chmod 755 kubectl
 mv kubectl /usr/local/bin
 EOF
 
+# add regctl
+RUN <<EOF
+set -e
+curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-${ARCH} >/usr/local/bin/regctl
+chmod +x /usr/local/bin/regctl
+EOF
+
 # add cibuilder user
 RUN <<EOF
 set -e
