@@ -56,6 +56,12 @@ EOF
 # add regctl
 RUN <<EOF
 set -e
+case "$TARGETARCH" in \
+    amd64) ARCH="amd64" ;; \
+    arm64) ARCH="arm64" ;; \
+    *) echo "Unsupported TARGETARCH: $TARGETARCH"; exit 1 ;;
+esac
+echo 1
 curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-${ARCH} >/usr/local/bin/regctl
 chmod +x /usr/local/bin/regctl
 EOF
