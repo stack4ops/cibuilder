@@ -1,4 +1,4 @@
-FROM docker:cli
+FROM moby/buildkit:rootless
 
 ARG HTTP_PROXY=
 ARG HTTPS_PROXY=
@@ -14,7 +14,7 @@ USER root
 
 ENV TZ=Europe/Berlin
 
-ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/cibuilder/bin
+ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/user/bin
 
 RUN <<EOF
 set -e
@@ -23,21 +23,8 @@ tzdata \
 curl \
 bash \
 jq \
-git \
-skopeo
-EOF
-
-# add buildkit
-RUN <<EOF
-set -e
-BUILDKIT_VERSION=$(curl -s https://api.github.com/repos/moby/buildkit/releases/latest | jq -r .tag_name)
-case "$TARGETARCH" in \
-    amd64) ARCH="amd64" ;; \
-    arm64) ARCH="arm64" ;; \
-    *) echo "Unsupported TARGETARCH: $TARGETARCH"; exit 1 ;;
-esac
-curl -L "https://github.com/moby/buildkit/releases/download/${BUILDKIT_VERSION}/buildkit-${BUILDKIT_VERSION}.linux-${ARCH}.tar.gz" | tar -xz bin/buildctl -C /usr/local/bin --strip-components=1
-chmod +x /usr/local/bin/buildctl
+docker-cli \
+git
 EOF
 
 # add kubectl
@@ -66,13 +53,6 @@ curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-l
 chmod +x /usr/local/bin/regctl
 EOF
 
-# add cibuilder user
-RUN <<EOF
-set -e
-addgroup -g 1000 cibuilder
-adduser -D -G cibuilder -u 1000 cibuilder
-EOF
-
 # add entrypoint
 COPY ./cibuild_entrypoint.sh /usr/local/bin/
 RUN <<EOF
@@ -80,15 +60,22 @@ set -e
 chmod 755 /usr/local/bin/cibuild_entrypoint.sh
 EOF
 
-USER cibuilder
+# add ca certs for localregistry
+COPY ./localregistry/root.pem /usr/local/share/ca-certificates/root.pem
+COPY ./localregistry/signing.pem /usr/local/share/ca-certificates/signing.pem
+
+RUN <<EOF
+update-ca-certificates
+EOF
+
+# user context
+USER user
 
 RUN <<EOF
 set -e
-cd /home/cibuilder
+cd /home/user
 curl -L -s "${CIBUILDER_BIN_URL}/${CIBUILDER_BIN_REF}/cibuild-${CIBUILDER_BIN_REF}.tar.gz" | tar xzf - --strip-components=1 "cibuild-${CIBUILDER_BIN_REF}/bin"
 chmod -R 755 bin
 EOF
-
-ENV HOME=/home/cibuilder
 
 ENTRYPOINT ["cibuild_entrypoint.sh"]

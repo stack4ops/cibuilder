@@ -9,10 +9,10 @@ if [ -n "${CIBUILDER_BIN_URL:-}" ] || [ -n "${CIBUILDER_BIN_REF:-}" ]; then
     echo "using CIBUILDER_BIN_URL: ${CIBUILDER_BIN_URL}"
     echo "using CIBUILDER_BIN_REF: ${CIBUILDER_BIN_REF}"
 
-    cd /home/cibuilder
+    cd /home/user
 
     if [ -d "bin" ]; then
-        echo "delete existing /home/cibuilder/bin folder"
+        echo "delete existing /home/user/bin folder"
         rm -r "bin"
     fi
 
