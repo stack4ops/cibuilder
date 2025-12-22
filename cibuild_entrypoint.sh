@@ -20,4 +20,6 @@ if [ -n "${CIBUILDER_BIN_URL:-}" ] || [ -n "${CIBUILDER_BIN_REF:-}" ]; then
     chmod -R 755 "bin"
 fi
 
+export BUILDKITD_FLAGS="--oci-worker-no-process-sandbox --config /home/user/.config/buildkit/buildkitd.toml"
+
 exec "$@"

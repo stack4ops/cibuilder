@@ -78,4 +78,10 @@ curl -L -s "${CIBUILDER_BIN_URL}/${CIBUILDER_BIN_REF}/cibuild-${CIBUILDER_BIN_RE
 chmod -R 755 bin
 EOF
 
+# Add empty buildkitd.toml 
+RUN <<EOF
+mkdir -p /home/user/.config/buildkit
+touch /home/user/.config/buildkit/buildkitd.toml
+EOF
+
 ENTRYPOINT ["cibuild_entrypoint.sh"]
