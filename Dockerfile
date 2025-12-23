@@ -1,3 +1,4 @@
+FROM docker:cli AS dockercli
 FROM moby/buildkit:rootless
 
 ARG HTTP_PROXY=
@@ -19,13 +20,16 @@ ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/user
 RUN <<EOF
 set -e
 apk add --no-cache \
+ca-certificates \
 tzdata \
 curl \
 bash \
 jq \
-docker-cli \
 git
 EOF
+
+COPY --from=dockercli   /usr/local/bin/docker  /usr/local/bin/docker
+COPY --from=dockercli  /usr/local/libexec/docker/cli-plugins/docker-buildx /usr/local/libexec/docker/cli-plugins/docker-buildx
 
 # add kubectl
 RUN <<EOF
