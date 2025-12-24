@@ -1,21 +1,10 @@
 ---
 variables:
-  CI_DOCKER_REF: "29.1.2"
-
   CIBUILDER_IMAGE: "${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/stack4ops/cibuilder"
-  CIBUILDER_REF: "${CI_DOCKER_REF}-cli"
-
-  CI_DIND_IMAGE: "${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/library/docker"
-  CI_DIND_REF: "${CI_DOCKER_REF}-dind"
-
-  DOCKER_HOST: tcp://docker:2375/
-  DOCKER_DRIVER: overlay2
+  CIBUILDER_REF: "rootless"
 
 image: "${CIBUILDER_IMAGE}:${CIBUILDER_REF}"
 
-services:
-  - name: "${CI_DIND_IMAGE}:${CI_DIND_REF}"
-    alias: docker
 workflow:
   rules:
     # Trigger rules:
@@ -44,31 +33,38 @@ stages:
   - test
   - deploy
 
-.prepare:
-  cache:
-    - key: cache-$CI_PIPELINE_ID
-      paths:
-        - cache/
-  resource_group: buildx
-
 check:
   stage: check
   script: "cibuild -s check"
-  extends: .prepare
   
-build:
+build-amd64:
+  variables:
+    BUILD_PLATFORMS: linux/amd64
   stage: build
   script: "cibuild -s build"
-  extends: .prepare
   tags:
-    - saas-linux-large-amd64
+    - saas-linux-medium-amd64
+
+build-arm64:
+  variables:
+    BUILD_PLATFORMS: linux/arm64
+  stage: build
+  script: "cibuild -s build"
+  tags:
+    - saas-linux-medium-arm64
 
 test:
   stage: test
+  services:
+    - name: docker:dind
+      alias: docker
+  variables:
+    TEST_BACKEND: docker
+    DIND_ENABLED: 1
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
   script: "cibuild -s test"
-  extends: .prepare
 
 deploy:
   stage: deploy
   script: "cibuild -s deploy"
-  extends: .prepare
