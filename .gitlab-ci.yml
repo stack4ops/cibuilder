@@ -60,6 +60,7 @@ test:
       alias: docker
   variables:
     TEST_BACKEND: docker
+    TEST_RUN_TIMEOUT: 120
     DIND_ENABLED: 1
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
