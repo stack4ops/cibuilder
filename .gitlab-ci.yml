@@ -53,18 +53,35 @@ build-arm64:
   tags:
     - saas-linux-medium-arm64
 
-test:
-  stage: test
+test-amd64:
   services:
     - name: docker:dind
       alias: docker
   variables:
+    BUILD_PLATFORMS: linux/amd64
     TEST_BACKEND: docker
     TEST_RUN_TIMEOUT: 120
     DIND_ENABLED: 1
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   script: "cibuild -s test"
+  tags:
+    - saas-linux-medium-amd64
+
+test-arm64:
+  services:
+    - name: docker:dind
+      alias: docker
+  variables:
+    BUILD_PLATFORMS: linux/arm64
+    TEST_BACKEND: docker
+    TEST_RUN_TIMEOUT: 120
+    DIND_ENABLED: 1
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  script: "cibuild -s test"
+  tags:
+    - saas-linux-medium-arm64
 
 deploy:
   stage: deploy
