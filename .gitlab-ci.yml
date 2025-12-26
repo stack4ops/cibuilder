@@ -39,7 +39,7 @@ check:
   
 build-amd64:
   variables:
-    BUILD_PLATFORMS: linux/amd64
+    BUILD_NATIVE: 1
   stage: build
   script: "cibuild -s build"
   tags:
@@ -47,7 +47,7 @@ build-amd64:
 
 build-arm64:
   variables:
-    BUILD_PLATFORMS: linux/arm64
+    BUILD_NATIVE: 1
   stage: build
   script: "cibuild -s build"
   tags:
@@ -58,7 +58,6 @@ test-amd64:
     - name: docker:dind
       alias: docker
   variables:
-    BUILD_PLATFORMS: linux/amd64
     TEST_BACKEND: docker
     TEST_RUN_TIMEOUT: 120
     DIND_ENABLED: 1
@@ -73,7 +72,6 @@ test-arm64:
     - name: docker:dind
       alias: docker
   variables:
-    BUILD_PLATFORMS: linux/arm64
     TEST_BACKEND: docker
     TEST_RUN_TIMEOUT: 120
     DIND_ENABLED: 1
