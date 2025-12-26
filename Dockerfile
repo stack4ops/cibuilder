@@ -21,6 +21,7 @@ RUN <<EOF
 set -e
 apk add --no-cache \
 ca-certificates \
+openssh \
 tzdata \
 curl \
 bash \
