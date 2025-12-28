@@ -40,13 +40,14 @@ case ${CIBUILDER_STAGE:?} in
     cibuild -s deploy
     ;;  
   main)
-    main
+    cibuild -s main
     ;;
   "")
-    log 0 "missing CIBUILDER_STAGE"
+    echo "missing CIBUILDER_STAGE"
     exit 1
     ;;
   *)
-    log 0 "unsupported CIBUILDER_STAGE: ${CIBUILDER_STAGE}"
+    echo "unsupported CIBUILDER_STAGE: ${CIBUILDER_STAGE}"
     exit 1
     ;;
+  esac
