@@ -30,26 +30,26 @@ workflow:
 stages:
   - check
   - build
-  - test
   - deploy
 
 check:
   stage: check
-  script: "cibuild -s check"
+  variables:
+    CIBUILDER_STAGE: check
   
 build-amd64:
   variables:
     BUILD_NATIVE: 1
+    CIBUILDER_STAGE: build
   stage: build
-  script: "cibuild -s build"
   tags:
     - saas-linux-medium-amd64
 
 build-arm64:
   variables:
     BUILD_NATIVE: 1
+    CIBUILDER_STAGE: build
   stage: build
-  script: "cibuild -s build"
   tags:
     - saas-linux-medium-arm64
 
@@ -58,12 +58,12 @@ test-amd64:
     - name: docker:dind
       alias: docker
   variables:
+    CIBUILDER_STAGE: test
     TEST_BACKEND: docker
     TEST_RUN_TIMEOUT: 120
     DIND_ENABLED: 1
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
-  script: "cibuild -s test"
   tags:
     - saas-linux-medium-amd64
 
@@ -72,15 +72,16 @@ test-arm64:
     - name: docker:dind
       alias: docker
   variables:
+    CIBUILDER_STAGE: test
     TEST_BACKEND: docker
     TEST_RUN_TIMEOUT: 120
     DIND_ENABLED: 1
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
-  script: "cibuild -s test"
   tags:
     - saas-linux-medium-arm64
 
 deploy:
+  variables:
+    CIBUILDER_STAGE: deploy
   stage: deploy
-  script: "cibuild -s deploy"
