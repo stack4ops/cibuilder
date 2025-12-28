@@ -34,7 +34,7 @@ case ${CIBUILDER_STAGE:?} in
     cibuild -s build
     ;;
   test)
-    cibuild -s build
+    cibuild -s test
     ;;
   deploy)
     cibuild -s deploy
