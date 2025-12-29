@@ -30,6 +30,7 @@ workflow:
 stages:
   - check
   - build
+  - test
   - deploy
 
 check:
