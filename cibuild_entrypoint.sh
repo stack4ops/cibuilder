@@ -26,28 +26,16 @@ fi
 # set generic default BUILDKITD_FLAGS working mostly everywhere
 export BUILDKITD_FLAGS="${BUILDKITD_FLAGS:--oci-worker-no-process-sandbox}"
 
-case ${CIBUILDER_STAGE:?} in
-  check)
-    cibuild -s check
-    ;;
-  build)
-    cibuild -s build
-    ;;
-  test)
-    cibuild -s test
-    ;;
-  deploy)
-    cibuild -s deploy
-    ;;  
-  main)
-    cibuild -s main
-    ;;
-  "")
-    echo "missing CIBUILDER_STAGE"
-    exit 1
-    ;;
+: "${CIBUILDER_STAGE:?missing CIBUILDER_STAGE}"
+
+case "$CIBUILDER_STAGE" in
+  check)  cibuild -s check ;;
+  build)  cibuild -s build ;;
+  test)   cibuild -s test ;;
+  deploy) cibuild -s deploy ;;
+  main)   cibuild -s main ;;
   *)
-    echo "unsupported CIBUILDER_STAGE: ${CIBUILDER_STAGE}"
+    echo "unsupported CIBUILDER_STAGE: $CIBUILDER_STAGE"
     exit 1
     ;;
-  esac
+esac
