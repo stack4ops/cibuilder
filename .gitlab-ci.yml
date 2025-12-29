@@ -38,14 +38,16 @@ check:
   stage: check
   variables:
     CIBUILDER_STAGE: check
-  script: "echo 'cibuilder entrypoint active'"
+  script:
+    - :
   
 build-amd64:
   stage: build
   variables:
     BUILD_NATIVE: 1
     CIBUILDER_STAGE: build
-  script: "echo 'cibuilder entrypoint active'"
+  script:
+    - :
   tags:
     - saas-linux-medium-amd64
 
@@ -54,7 +56,8 @@ build-arm64:
   variables:
     BUILD_NATIVE: 1
     CIBUILDER_STAGE: build
-  script: "echo 'cibuilder entrypoint active'"
+  script:
+    - :
   tags:
     - saas-linux-medium-arm64
 
@@ -70,7 +73,8 @@ test-amd64:
     DIND_ENABLED: 1
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
-  script: "echo 'cibuilder entrypoint active'"
+  script:
+    - :
   tags:
     - saas-linux-medium-amd64
 
@@ -86,7 +90,8 @@ test-arm64:
     DIND_ENABLED: 1
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
-  script: "echo 'cibuilder entrypoint active'"
+  script:
+    - :
   tags:
     - saas-linux-medium-arm64
 
@@ -94,4 +99,5 @@ deploy:
   stage: deploy
   variables:
     CIBUILDER_STAGE: deploy
-  script: "echo 'cibuilder entrypoint active'"
+  script:
+    - :
