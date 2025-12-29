@@ -2,6 +2,8 @@
 
 set -eu
 
+PROJECT_DIR="${CI_PROJECT_DIR:-$(pwd)}"
+
 # only dynamic cibuild loading libs if not locked (p.e production gitlab-runner) 
 if [ ! -d "/tmp/cibuilder.locked" ]; then
     if [ -n "${CIBUILDER_BIN_URL:-}" ] || [ -n "${CIBUILDER_BIN_REF:-}" ]; then
@@ -10,7 +12,7 @@ if [ ! -d "/tmp/cibuilder.locked" ]; then
 
         echo "using CIBUILDER_BIN_URL: ${CIBUILDER_BIN_URL}"
         echo "using CIBUILDER_BIN_REF: ${CIBUILDER_BIN_REF}"
-
+        
         cd /home/user
 
         if [ -d "bin" ]; then
@@ -22,6 +24,9 @@ if [ ! -d "/tmp/cibuilder.locked" ]; then
         chmod -R 755 "bin"
     fi
 fi
+
+# return to repo
+cd "$PROJECT_DIR"
 
 # set generic default BUILDKITD_FLAGS working mostly everywhere
 export BUILDKITD_FLAGS="${BUILDKITD_FLAGS:--oci-worker-no-process-sandbox}"
