@@ -41,6 +41,7 @@ check:
     - ""
   
 build-amd64:
+  stage: build
   variables:
     BUILD_NATIVE: 1
     CIBUILDER_STAGE: build
@@ -50,6 +51,7 @@ build-amd64:
     - saas-linux-medium-amd64
 
 build-arm64:
+  stage: build
   variables:
     BUILD_NATIVE: 1
     CIBUILDER_STAGE: build
@@ -59,6 +61,7 @@ build-arm64:
     - saas-linux-medium-arm64
 
 test-amd64:
+  stage: test
   services:
     - name: docker:dind
       alias: docker
@@ -75,6 +78,7 @@ test-amd64:
     - saas-linux-medium-amd64
 
 test-arm64:
+  stage: test
   services:
     - name: docker:dind
       alias: docker
@@ -91,8 +95,8 @@ test-arm64:
     - saas-linux-medium-arm64
 
 deploy:
+  stage: deploy
   variables:
     CIBUILDER_STAGE: deploy
-  stage: deploy
   script: 
     - ""
