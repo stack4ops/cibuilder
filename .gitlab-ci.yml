@@ -39,7 +39,7 @@ check:
   variables:
     CIBUILDER_STAGE: check
   script:
-    - :
+    - /bin/true
   
 build-amd64:
   stage: build
@@ -47,7 +47,7 @@ build-amd64:
     BUILD_NATIVE: 1
     CIBUILDER_STAGE: build
   script:
-    - :
+    - /bin/true
   tags:
     - saas-linux-medium-amd64
 
@@ -57,7 +57,7 @@ build-arm64:
     BUILD_NATIVE: 1
     CIBUILDER_STAGE: build
   script:
-    - :
+    - /bin/true
   tags:
     - saas-linux-medium-arm64
 
@@ -74,7 +74,7 @@ test-amd64:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   script:
-    - :
+    - /bin/true
   tags:
     - saas-linux-medium-amd64
 
@@ -91,7 +91,7 @@ test-arm64:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   script:
-    - :
+    - /bin/true
   tags:
     - saas-linux-medium-arm64
 
@@ -100,4 +100,4 @@ deploy:
   variables:
     CIBUILDER_STAGE: deploy
   script:
-    - :
+    - /bin/true
