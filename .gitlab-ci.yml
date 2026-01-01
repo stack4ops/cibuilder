@@ -37,7 +37,7 @@ stages:
 check:
   stage: check
   variables:
-    CIBUILDER_STAGE: check
+    CIBUILD_RUN: check
   script:
     - /bin/true
   
@@ -45,7 +45,7 @@ build-amd64:
   stage: build
   variables:
     BUILD_NATIVE: 1
-    CIBUILDER_STAGE: build
+    CIBUILD_RUN: build
   script:
     - /bin/true
   tags:
@@ -55,7 +55,7 @@ build-arm64:
   stage: build
   variables:
     BUILD_NATIVE: 1
-    CIBUILDER_STAGE: build
+    CIBUILD_RUN: build
   script:
     - /bin/true
   tags:
@@ -67,7 +67,7 @@ test-amd64:
     - name: docker:dind
       alias: docker
   variables:
-    CIBUILDER_STAGE: test
+    CIBUILD_RUN: test
     TEST_BACKEND: docker
     TEST_RUN_TIMEOUT: 120
     DIND_ENABLED: 1
@@ -84,7 +84,7 @@ test-arm64:
     - name: docker:dind
       alias: docker
   variables:
-    CIBUILDER_STAGE: test
+    CIBUILD_RUN: test
     TEST_BACKEND: docker
     TEST_RUN_TIMEOUT: 120
     DIND_ENABLED: 1
@@ -98,6 +98,6 @@ test-arm64:
 deploy:
   stage: deploy
   variables:
-    CIBUILDER_STAGE: deploy
+    CIBUILD_RUN: deploy
   script:
     - /bin/true

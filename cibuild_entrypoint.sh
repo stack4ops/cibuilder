@@ -31,16 +31,16 @@ cd "$PROJECT_DIR"
 # set generic default BUILDKITD_FLAGS working mostly everywhere
 export BUILDKITD_FLAGS="${BUILDKITD_FLAGS:--oci-worker-no-process-sandbox}"
 
-: "${CIBUILDER_STAGE:?missing CIBUILDER_STAGE}"
+: "${CIBUILD_RUN:?missing CIBUILD_RUN}"
 
-case "$CIBUILDER_STAGE" in
-  check)  cibuild -s check ;;
-  build)  cibuild -s build ;;
-  test)   cibuild -s test ;;
-  deploy) cibuild -s deploy ;;
-  main)   cibuild -s main ;;
+case "$CIBUILD_RUN" in
+  check)  cibuild -r check ;;
+  build)  cibuild -r build ;;
+  test)   cibuild -r test ;;
+  deploy) cibuild -r deploy ;;
+  main)   cibuild -r main ;;
   *)
-    echo "unsupported CIBUILDER_STAGE: $CIBUILDER_STAGE"
+    echo "unsupported CIBUILD_RUN: $CIBUILD_RUN"
     exit 1
     ;;
 esac
