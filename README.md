@@ -4,8 +4,6 @@ An image based on buildkit:rootless for building container images in a gitlab pi
 
 ## Image Customzing
 -------------------
-* Running as non-root
-
 * Pipeline run requirements:
     * **check**: regctl and jq
     * **build**: buildctl for direct communication with buildkitd endpoints over mTLS, also docker-cli is embedded 
@@ -18,6 +16,8 @@ An image based on buildkit:rootless for building container images in a gitlab pi
 
     * Executing build run commands: `cibuild -r check|build|test|deploy` dependant on CIBUILD_RUN env
     * Dynamic loading of external cibuild libs (CIBUILDER_BIN_URL and CIBUILDER_BIN_REF env vars). This will override the embedded cibuild libs. It is useful for debugging and development. This can be switched of in production mode on custom gitlab-runner by mounting an empty volume /tmp/cibuilder.locked
+
+* Adding ca certs for localregistry
  
 ## Notes
 -------------------
