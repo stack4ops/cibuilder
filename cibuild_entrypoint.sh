@@ -31,16 +31,16 @@ cd "$PROJECT_DIR"
 # set generic default BUILDKITD_FLAGS working mostly everywhere
 export BUILDKITD_FLAGS="${BUILDKITD_FLAGS:--oci-worker-no-process-sandbox}"
 
-: "${CIBUILD_RUN:?missing CIBUILD_RUN}"
+: "${CIBUILD_RUN_CMD:?missing CIBUILD_RUN_CMD}"
 
-case "$CIBUILD_RUN" in
+case "$CIBUILD_RUN_CMD" in
   check)  cibuild -r check ;;
   build)  cibuild -r build ;;
   test)   cibuild -r test ;;
   deploy) cibuild -r deploy ;;
-  main)   cibuild -r main ;;
+  all)   cibuild -r all ;;
   *)
-    echo "unsupported CIBUILD_RUN: $CIBUILD_RUN"
+    echo "unsupported CIBUILD_RUN_CMD: $CIBUILD_RUN_CMD"
     exit 1
     ;;
 esac
