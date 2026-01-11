@@ -1,1 +1,1 @@
-cibuild.local.cfg
+cibuild.*.env
