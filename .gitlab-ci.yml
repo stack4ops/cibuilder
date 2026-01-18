@@ -12,8 +12,11 @@ workflow:
     # The default CI_PIPELINE_SOURCE trigger is schedule
     # Edit or comment in other trigger below
 
+    # Create a pipline on web "Run pipline"
+    - if: $CI_PIPELINE_SOURCE == "web"
+
     # Create a pipline on schedules
-    - if: $CI_PIPELINE_SOURCE == "schedule"
+    # - if: $CI_PIPELINE_SOURCE == "schedule"
 
     # Create a pipline on every push commit
     # - if: $CI_PIPELINE_SOURCE == "push"
@@ -21,12 +24,10 @@ workflow:
     # Create a pipeline on merge_requests_event
     # - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
-    # Create a pipline on web "Run pipline"
-    # - if: $CI_PIPELINE_SOURCE == "web" 
-
     # Example: Create pipeline on every push on every branch except main branch
     # - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
     #   when: never
+    - when: never
 
 stages:
   - check
@@ -37,7 +38,7 @@ stages:
 check:
   stage: check
   variables:
-    CIBUILD_CHECK_ENABLED: 1
+    CIBUILDER_BIN_REF: main
     CIBUILD_RUN_CMD: check
   script:
     - /bin/true
@@ -45,7 +46,7 @@ check:
 build-amd64:
   stage: build
   variables:
-    CIBUILD_BUILD_NATIVE: 1
+    CIBUILDER_BIN_REF: main
     CIBUILD_RUN_CMD: build
   script:
     - /bin/true
@@ -55,7 +56,7 @@ build-amd64:
 build-arm64:
   stage: build
   variables:
-    CIBUILD_BUILD_NATIVE: 1
+    CIBUILDER_BIN_REF: main
     CIBUILD_RUN_CMD: build
   script:
     - /bin/true
@@ -68,12 +69,8 @@ test-amd64:
     - name: docker:dind
       alias: docker
   variables:
-    CIBUILD_TEST_ENABLED: 1
+    CIBUILDER_BIN_REF: main
     CIBUILD_RUN_CMD: test
-    CIBUILD_TEST_BACKEND: docker
-    CIBUILD_TEST_RUN_TIMEOUT: 120
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
   script:
     - /bin/true
   tags:
@@ -85,11 +82,8 @@ test-arm64:
     - name: docker:dind
       alias: docker
   variables:
+    CIBUILDER_BIN_REF: main
     CIBUILD_RUN_CMD: test
-    CIBUILD_TEST_BACKEND: docker
-    CIBUILD_TEST_RUN_TIMEOUT: 120
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
   script:
     - /bin/true
   tags:
@@ -98,8 +92,7 @@ test-arm64:
 deploy:
   stage: deploy
   variables:
-    CIBUILD_RUN_CMD: deploy
-    CIBUILD_DEPLOY_ADDITIONAL_TAGS: __DATETIME__
-    CIBUILD_DEPLOY_MINOR_TAG_REGEX: '^v0\.(2|3|4|5|6|7|8|9)\d+\.\d+-rootless$'
+    CIBUILDER_BIN_REF: main
+    CIBUILD_RUN_CMD: deploy  
   script:
     - /bin/true
