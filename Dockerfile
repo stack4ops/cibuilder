@@ -53,7 +53,6 @@ case "$TARGETARCH" in \
     arm64) ARCH="arm64" ;; \
     *) echo "Unsupported TARGETARCH: $TARGETARCH"; exit 1 ;;
 esac
-echo 1
 curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-${ARCH} >/usr/local/bin/regctl
 chmod +x /usr/local/bin/regctl
 EOF
