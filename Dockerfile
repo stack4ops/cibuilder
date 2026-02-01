@@ -58,6 +58,18 @@ curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-l
 chmod +x /usr/local/bin/regctl
 EOF
 
+# add cosign
+RUN <<EOF
+set -e
+case "$TARGETARCH" in \
+    amd64) ARCH="amd64" ;; \
+    arm64) ARCH="arm64" ;; \
+    *) echo "Unsupported TARGETARCH: $TARGETARCH"; exit 1 ;;
+esac
+curl -L https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-${ARCH} >/usr/local/bin/cosign
+chmod +x /usr/local/bin/cosign
+EOF
+
 # add entrypoint
 COPY ./cibuild_entrypoint.sh /usr/local/bin/
 RUN <<EOF
