@@ -1,0 +1,8 @@
+[
+    {
+        "type": "log",
+        "entrypoint": "/bin/sh",
+        "cmd": ["-c", "docker buildx version; sleep infinity"],
+        "assert": "github.com/docker/buildx"
+    }
+]

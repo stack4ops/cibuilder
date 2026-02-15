@@ -3,8 +3,9 @@
 set -eu
 
 PROJECT_DIR="${CI_PROJECT_DIR:-$(pwd)}"
+export DOCKER_CONFIG="${DOCKER_CONFIG:-/home/user/.docker}"
 
-# only dynamic cibuild loading libs if not locked (p.e production gitlab-runner) 
+# only dynamic cibuild loading libs if not locked
 if [ ! -d "/tmp/cibuilder.locked" ]; then
     if [ -n "${CIBUILDER_BIN_URL:-}" ] || [ -n "${CIBUILDER_BIN_REF:-}" ]; then
         CIBUILDER_BIN_URL="${CIBUILDER_BIN_URL:-https://gitlab.com/stack4ops/public/cibuild/-/archive}"
@@ -33,12 +34,22 @@ export BUILDKITD_FLAGS="${BUILDKITD_FLAGS:--oci-worker-no-process-sandbox}"
 
 : "${CIBUILD_RUN_CMD:?missing CIBUILD_RUN_CMD}"
 
+exec_cmd() {
+    if [ "${CIBUILDER_ROOTLESS_KIT:-1}" = "1" ]; then
+        echo "running in rootlesskit"
+        rootlesskit -- /bin/sh -c "cibuild -r $CIBUILD_RUN_CMD"
+    else
+        echo "running without rootlesskit"
+        cibuild -r $CIBUILD_RUN_CMD
+    fi
+}
+
 case "$CIBUILD_RUN_CMD" in
-  check)  exec cibuild -r check ;;
-  build)  exec cibuild -r build ;;
-  test)   exec cibuild -r test ;;
-  deploy) exec cibuild -r deploy ;;
-  all)    exec cibuild -r all ;;
+  check)    exec_cmd ;;
+  build)    exec_cmd ;;
+  test)     exec_cmd ;;
+  release)  exec_cmd ;;
+  all)      exec_cmd ;;
   *)
     echo "unsupported CIBUILD_RUN_CMD: $CIBUILD_RUN_CMD"
     exit 1

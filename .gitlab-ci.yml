@@ -33,7 +33,7 @@ stages:
   - check
   - build
   - test
-  - deploy
+  - release
 
 check:
   stage: check
@@ -89,10 +89,10 @@ test-arm64:
   tags:
     - saas-linux-medium-arm64
 
-deploy:
-  stage: deploy
+release:
+  stage: release
   variables:
     CIBUILDER_BIN_REF: main
-    CIBUILD_RUN_CMD: deploy  
+    CIBUILD_RUN_CMD: release
   script:
     - /bin/true

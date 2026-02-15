@@ -8,13 +8,13 @@ An image based on buildkit:rootless for building container images in a gitlab pi
     * **check**: regctl and jq
     * **build**: buildctl for direct communication with buildkitd endpoints over mTLS, also docker-cli is embedded 
     * **test**: kubectl and docker-cli are embedded for testing images in dind or kubernetes environments
-    * **deploy**: regctl for creating the final multiarch image-index and adding additional tags
+    * **release**: regctl for creating the final multiarch image-index and adding additional tags
 
 * Embedded cibuild libs: https://gitlab.com/stack4ops/public/cibuild
 
 * custom and fix cibuild_entrypoint (no extra command or arguments are appended):
 
-    * Executing build run commands: `cibuild -r main|check|build|test|deploy` dependant on CIBUILD_RUN env
+    * Executing build run commands: `cibuild -r main|check|build|test|release` dependant on CIBUILD_RUN env
     * Dynamic loading of external cibuild libs (CIBUILDER_BIN_URL and CIBUILDER_BIN_REF env vars). This will override the embedded cibuild libs. It is useful for debugging and development. This can be switched of in production mode on custom gitlab-runner by mounting an empty volume /tmp/cibuilder.locked
 
 * Adding ca certs for localregistry
