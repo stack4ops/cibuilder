@@ -1,12 +1,13 @@
 FROM docker:cli AS dockercli
+FROM martizih/kaniko:latest AS kaniko
 FROM moby/buildkit:rootless
+
+ARG TARGETARCH
 
 ARG HTTP_PROXY=
 ARG HTTPS_PROXY=
 ARG http_proxy=
 ARG https_proxy=
-
-ARG TARGETARCH
 
 ARG CIBUILDER_BIN_URL=https://gitlab.com/stack4ops/public/cibuild/-/archive
 ARG CIBUILDER_BIN_REF=main
@@ -31,6 +32,12 @@ EOF
 
 COPY --from=dockercli   /usr/local/bin/docker  /usr/local/bin/docker
 COPY --from=dockercli  /usr/local/libexec/docker/cli-plugins/docker-buildx /usr/local/libexec/docker/cli-plugins/docker-buildx
+
+RUN <<EOF
+mkdir /kaniko
+chmod 777 /kaniko
+EOF
+COPY --from=kaniko /kaniko/executor /kaniko/executor
 
 # add kubectl
 RUN <<EOF
@@ -67,6 +74,13 @@ case "$TARGETARCH" in \
 esac
 curl -L https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-${ARCH} >/usr/local/bin/cosign
 chmod +x /usr/local/bin/cosign
+EOF
+
+# add buildctl-daemonless.sh
+COPY ./buildctl-daemonless.sh /usr/bin/
+RUN <<EOF
+set -e
+chmod 755 /usr/bin/buildctl-daemonless.sh
 EOF
 
 # add entrypoint
