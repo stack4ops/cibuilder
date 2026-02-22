@@ -1,0 +1,78 @@
+name: cibuilder
+
+on:
+  workflow_dispatch:
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN || '' }}
+  CIBUILD_CI_TOKEN: ${{ secrets.CIBUILD_CI_TOKEN || '' }}
+  CIBUILD_BASE_REGISTRY_PASS: ${{ secrets.CIBUILD_BASE_REGISTRY_PASS  || '' }}
+  CIBUILD_TARGET_REGISTRY_PASS: ${{ secrets.CIBUILD_TARGET_REGISTRY_PASS  || '' }}
+  CIBUILD_BUILD_BUILDKIT_CLIENT_KEY: ${{ secrets.CIBUILD_BUILD_BUILDKIT_CLIENT_KEY  || '' }}
+  CIBUILD_BUILD_BUILDKIT_SERVICE_ACCOUNT: ${{ secrets.CIBUILD_BUILD_BUILDKIT_SERVICE_ACCOUNT  || '' }}
+  CIBUILD_TEST_SERVICE_ACCOUNT: ${{ secrets.CIBUILD_TEST_SERVICE_ACCOUNT  || '' }}
+  CIBUILD_RELEASE_COSIGN_PRIVATE_KEY: ${{ secrets.CIBUILD_RELEASE_COSIGN_PRIVATE_KEY  || '' }}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: stack4ops/actions-cibuilder@v1
+        with:
+          run_cmd: check
+          bin_ref: main
+
+  build:
+    needs: check
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: stack4ops/actions-cibuilder@v1
+        with:
+          run_cmd: build
+          bin_ref: main
+
+  test:
+    needs: build
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: stack4ops/actions-cibuilder-dind@v1
+        with:
+          run_cmd: test
+          bin_ref: main
+    
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: stack4ops/actions-cibuilder@v1
+        with:
+          run_cmd: release
+          bin_ref: main
