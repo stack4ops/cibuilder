@@ -28,6 +28,7 @@ jobs:
   build:
     needs: check
     strategy:
+      fail-fast: true
       matrix:
         include:
           - arch: amd64
@@ -48,6 +49,7 @@ jobs:
   test:
     needs: build
     strategy:
+      fail-fast: true
       matrix:
         include:
           - arch: amd64
