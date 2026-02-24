@@ -2,6 +2,10 @@ FROM docker:cli AS dockercli
 FROM martizih/kaniko:latest AS kaniko
 FROM moby/buildkit:rootless
 
+LABEL org.opencontainers.image.source="https://github.com/stack4ops/cibuilder"
+LABEL org.opencontainers.image.description="Multi CI build environment"
+LABEL org.opencontainers.image.licenses="Apache-2.0"
+
 ARG TARGETARCH
 
 ARG HTTP_PROXY=
