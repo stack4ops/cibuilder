@@ -24,6 +24,7 @@ jobs:
         with:
           run_cmd: check
           bin_ref: main
+          image: docker.io/stack4ops/cibuilder-dev:rootless
 
   build:
     needs: check
@@ -45,6 +46,7 @@ jobs:
         with:
           run_cmd: build
           bin_ref: main
+          image: docker.io/stack4ops/cibuilder-dev:rootless
 
   test:
     needs: build
@@ -66,6 +68,7 @@ jobs:
         with:
           run_cmd: test
           bin_ref: main
+          image: docker.io/stack4ops/cibuilder-dev:rootless
     
   release:
     needs: test
@@ -79,3 +82,4 @@ jobs:
         with:
           run_cmd: release
           bin_ref: main
+          image: docker.io/stack4ops/cibuilder-dev:rootless
