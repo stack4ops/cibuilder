@@ -73,6 +73,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      packages: delete
     steps:
       - uses: actions/checkout@v4
       - uses: stack4ops/actions-cibuilder@v1
