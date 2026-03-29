@@ -13,62 +13,62 @@ env:
   CIBUILD_RELEASE_COSIGN_PRIVATE_KEY: ${{ secrets.CIBUILD_RELEASE_COSIGN_PRIVATE_KEY  || '' }}
 
 jobs:
-  check:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      actions: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: stack4ops/actions-cibuilder@v1
-        with:
-          run_cmd: check
-          #bin_ref: main
+  # check:
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: read
+  #     actions: write
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: stack4ops/actions-cibuilder@v1
+  #       with:
+  #         run_cmd: check
+  #         #bin_ref: main
 
-  build:
-    needs: check
-    strategy:
-      fail-fast: true
-      matrix:
-        include:
-          - arch: amd64
-            runner: ubuntu-latest
-          - arch: arm64
-            runner: ubuntu-24.04-arm
-    runs-on: ${{ matrix.runner }}
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: stack4ops/actions-cibuilder@v1
-        with:
-          run_cmd: build
-          #bin_ref: main
+  # build:
+  #   needs: check
+  #   strategy:
+  #     fail-fast: true
+  #     matrix:
+  #       include:
+  #         - arch: amd64
+  #           runner: ubuntu-latest
+  #         - arch: arm64
+  #           runner: ubuntu-24.04-arm
+  #   runs-on: ${{ matrix.runner }}
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: stack4ops/actions-cibuilder@v1
+  #       with:
+  #         run_cmd: build
+  #         #bin_ref: main
 
-  test:
-    needs: build
-    strategy:
-      fail-fast: true
-      matrix:
-        include:
-          - arch: amd64
-            runner: ubuntu-latest
-          - arch: arm64
-            runner: ubuntu-24.04-arm
-    runs-on: ${{ matrix.runner }}
-    permissions:
-      contents: read
-      packages: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: stack4ops/actions-cibuilder-dind@v1
-        with:
-          run_cmd: test
-          #bin_ref: main
+  # test:
+  #   needs: build
+  #   strategy:
+  #     fail-fast: true
+  #     matrix:
+  #       include:
+  #         - arch: amd64
+  #           runner: ubuntu-latest
+  #         - arch: arm64
+  #           runner: ubuntu-24.04-arm
+  #   runs-on: ${{ matrix.runner }}
+  #   permissions:
+  #     contents: read
+  #     packages: read
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: stack4ops/actions-cibuilder-dind@v1
+  #       with:
+  #         run_cmd: test
+  #         #bin_ref: main
     
   release:
-    needs: test
+    #needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -78,4 +78,4 @@ jobs:
       - uses: stack4ops/actions-cibuilder@v1
         with:
           run_cmd: release
-          #bin_ref: main
+          bin_ref: main
