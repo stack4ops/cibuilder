@@ -23,7 +23,7 @@ jobs:
       - uses: stack4ops/actions-cibuilder@v1
         with:
           run_cmd: check
-          bin_ref: main
+          #bin_ref: main
 
   build:
     needs: check
@@ -44,7 +44,7 @@ jobs:
       - uses: stack4ops/actions-cibuilder@v1
         with:
           run_cmd: build
-          bin_ref: main
+          #bin_ref: main
 
   test:
     needs: build
@@ -65,7 +65,7 @@ jobs:
       - uses: stack4ops/actions-cibuilder-dind@v1
         with:
           run_cmd: test
-          bin_ref: main
+          #bin_ref: main
     
   release:
     needs: test
@@ -78,4 +78,4 @@ jobs:
       - uses: stack4ops/actions-cibuilder@v1
         with:
           run_cmd: release
-          bin_ref: main
+          #bin_ref: main
