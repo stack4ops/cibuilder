@@ -2,6 +2,8 @@ name: cibuilder
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 9 * * 1'
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN || '' }}
   CIBUILD_CI_TOKEN: ${{ secrets.CIBUILD_CI_TOKEN || '' }}
