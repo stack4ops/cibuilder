@@ -1,16 +1,16 @@
 # cibuilder
 -------------------
-An image based on buildkit:rootless for building container images in a gitlab pipeline with embedded cibuild libs (https://gitlab.com/stack4ops/public/cibuild).
+An image based on buildkit:rootless for building container images in a gitlab pipeline with embedded cibuild libs (https://github.com/stack4ops/cibuild).
 
-## Image Customzing
+## Customzations of buildkit:rootless
 -------------------
-* Pipeline run requirements:
+* Adding binaries for pipeline run requirements:
     * **check**: regctl and jq
-    * **build**: buildctl for direct communication with buildkitd endpoints over mTLS, also docker-cli is embedded 
+    * **build**: buildctl for direct communication with buildkitd endpoints over mTLS, docker-cli and buildx are also embedded 
     * **test**: kubectl and docker-cli are embedded for testing images in dind or kubernetes environments
-    * **release**: regctl for creating the final multiarch image-index and adding additional tags
+    * **release**: regctl for creating the final multiarch image-index and adding additional tags, cosign for signing images
 
-* Embedded cibuild libs: https://gitlab.com/stack4ops/public/cibuild
+* Embedded cibuild libs: https://github.com/stack4ops/cibuild
 
 * custom and fix cibuild_entrypoint (no extra command or arguments are appended):
 
