@@ -21,7 +21,7 @@ jobs:
       contents: read
       actions: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: stack4ops/actions-cibuilder@v1
         with:
           run_cmd: check
@@ -42,7 +42,7 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: stack4ops/actions-cibuilder@v1
         with:
           run_cmd: build
@@ -63,7 +63,7 @@ jobs:
       contents: read
       packages: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: stack4ops/actions-cibuilder-dind@v1
         with:
           run_cmd: test
@@ -76,7 +76,7 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: stack4ops/actions-cibuilder@v1
         with:
           run_cmd: release
