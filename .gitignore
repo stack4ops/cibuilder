@@ -1,1 +1,6 @@
 cibuild.local.env
+*.log
+test-results/
+.bats-test-counts
+.bats-tmp-*
+tests/testlibs/

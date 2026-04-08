@@ -1,0 +1,21 @@
+# ShellCheck configuration for cibuilder scripts
+
+# Exclude warnings for necessary patterns
+exclude=SC2034 # Variables used in environment expansion
+exclude=SC2086 # Double quote needed intentionally
+exclude=SC2002 # Useless cat (used for consistency)
+
+# Enable additional checks
+enable=all
+
+# Shell dialect
+shell=sh
+
+# Minimum severity to report
+severity=style
+
+# Source directives
+source-path=SCRIPTDIR
+
+# Shellcheck cache location
+check-source-files-in-tree=true
