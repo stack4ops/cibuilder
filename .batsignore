@@ -1,0 +1,7 @@
+# Bats test artifacts
+.bats-test-counts
+.bats-tmp-*
+
+# Test output
+test-results/
+*.tap
