@@ -85,11 +85,11 @@ jobs:
       - name: Update latest tag
         run: |
           git tag -f ${{ github.ref_name }}-latest
-          git push origin ${{ github.ref_name }}-latest --force
+          git push origin ${{ github.ref_name }} --force
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}-latest
+          name: ${{ github.ref_name }} latest
           prerelease: true
           make_latest: false
           generate_release_notes: false
