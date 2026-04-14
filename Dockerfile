@@ -8,11 +8,6 @@ LABEL org.opencontainers.image.licenses="Apache-2.0"
 
 ARG TARGETARCH
 
-ARG HTTP_PROXY=
-ARG HTTPS_PROXY=
-ARG http_proxy=
-ARG https_proxy=
-
 ARG CIBUILDER_BIN_URL=https://github.com/stack4ops/cibuild/archive/refs/heads
 ARG CIBUILDER_BIN_REF=main
 
