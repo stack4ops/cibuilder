@@ -73,11 +73,30 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
+      id-token: write
     steps:
       - uses: actions/checkout@v5
       - uses: stack4ops/actions-cibuilder@v1
         with:
           run_cmd: release
           bin_ref: main
+      - name: Update latest tag
+        run: |
+          git tag -f ${{ github.ref_name }}-latest
+          git push origin ${{ github.ref_name }}-latest --force
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          prerelease: true
+          make_latest: false
+          generate_release_notes: false
+          files: |
+            ${{ runner.temp }}/cibuild-output/sbom-linux-amd64.spdx.json
+            ${{ runner.temp }}/cibuild-output/sbom-linux-arm64.spdx.json
+            ${{ runner.temp }}/cibuild-output/provenance-linux-amd64.slsa.json
+            ${{ runner.temp }}/cibuild-output/provenance-linux-arm64.slsa.json
+            ${{ runner.temp }}/cibuild-output/digests.json
+            ${{ runner.temp }}/cibuild-output/cert.json
