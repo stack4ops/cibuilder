@@ -23,9 +23,8 @@
   "prHourlyLimit": 2,
 
   "packageRules": [
-
     {
-      "description": "debian base image — digest-only updates, manual review required",
+      "description": "debian base image — digest updates, always manual review",
       "matchDatasources": ["docker"],
       "matchPackageNames": ["debian"],
       "versioning": "docker",
@@ -33,9 +32,8 @@
       "labels": ["dependencies", "base-image"],
       "commitMessagePrefix": "fix(base):"
     },
-
     {
-      "description": "buildkit — semver + digest pinning, manual review",
+      "description": "buildkit — manual review (kernel-level impact)",
       "matchDatasources": ["docker"],
       "matchPackageNames": ["moby/buildkit"],
       "versioning": "semver",
@@ -43,9 +41,8 @@
       "labels": ["dependencies", "buildkit"],
       "commitMessagePrefix": "chore(buildkit):"
     },
-
     {
-      "description": "docker CLI — semver updates, manual review",
+      "description": "docker CLI — manual review",
       "matchDatasources": ["docker"],
       "matchPackageNames": ["docker"],
       "versioning": "semver",
@@ -53,9 +50,8 @@
       "labels": ["dependencies", "docker"],
       "commitMessagePrefix": "chore(docker):"
     },
-
     {
-      "description": "kaniko — semver updates, manual review",
+      "description": "kaniko — manual review",
       "matchDatasources": ["docker"],
       "matchPackageNames": ["martizih/kaniko"],
       "versioning": "semver",
@@ -63,7 +59,13 @@
       "labels": ["dependencies", "kaniko"],
       "commitMessagePrefix": "chore(kaniko):"
     },
-
+    {
+      "description": "binary tools (regctl, cosign, trivy) — manual review (supply chain sensitive)",
+      "matchManagers": ["custom.regex"],
+      "automerge": false,
+      "labels": ["dependencies", "tools"],
+      "commitMessagePrefix": "chore(tools):"
+    },
     {
       "description": "nix flake inputs — auto-merge",
       "matchManagers": ["nix"],
@@ -73,7 +75,6 @@
       "labels": ["dependencies", "nix"],
       "commitMessagePrefix": "chore(nix):"
     },
-
     {
       "description": "GitHub Actions — auto-merge",
       "matchManagers": ["github-actions"],
@@ -83,52 +84,42 @@
       "labels": ["dependencies", "ci"],
       "commitMessagePrefix": "chore(ci):"
     },
-
-    {
-      "description": "binary tool updates in Dockerfile — manual review",
-      "matchManagers": ["custom.regex"],
-      "automerge": false,
-      "labels": ["dependencies", "tools"],
-      "commitMessagePrefix": "chore(tools):"
-    },
-
     {
       "description": "all docker images — always pin digests",
       "matchDatasources": ["docker"],
       "pinDigests": true
     }
-
   ],
 
   "customManagers": [
     {
-      "description": "regctl binary in Dockerfile",
+      "description": "regctl ARG version in Dockerfile",
       "customType": "regex",
-      "fileMatch": ["Dockerfile"],
+      "fileMatch": ["(^|/)Dockerfile$"],
       "matchStrings": [
-        "regclient\\/releases\\/download\\/v(?<currentValue>[\\d.]+)\\/regctl"
+        "datasource=github-releases depName=regclient/regclient\\s+ARG REGCTL_VERSION=(?<currentValue>[\\d.]+)"
       ],
       "depNameTemplate": "regclient/regclient",
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "semver"
     },
     {
-      "description": "cosign binary in Dockerfile",
+      "description": "cosign ARG version in Dockerfile",
       "customType": "regex",
-      "fileMatch": ["Dockerfile"],
+      "fileMatch": ["(^|/)Dockerfile$"],
       "matchStrings": [
-        "cosign\\/releases\\/download\\/v(?<currentValue>[\\d.]+)\\/cosign"
+        "datasource=github-releases depName=sigstore/cosign\\s+ARG COSIGN_VERSION=(?<currentValue>[\\d.]+)"
       ],
       "depNameTemplate": "sigstore/cosign",
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "semver"
     },
     {
-      "description": "trivy binary in Dockerfile",
+      "description": "trivy ARG version in Dockerfile",
       "customType": "regex",
-      "fileMatch": ["Dockerfile"],
+      "fileMatch": ["(^|/)Dockerfile$"],
       "matchStrings": [
-        "trivy_(?<currentValue>[\\d.]+)_Linux"
+        "datasource=github-releases depName=aquasecurity/trivy\\s+ARG TRIVY_VERSION=(?<currentValue>[\\d.]+)"
       ],
       "depNameTemplate": "aquasecurity/trivy",
       "datasourceTemplate": "github-releases",
