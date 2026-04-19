@@ -2,8 +2,8 @@ name: cibuilder
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 9 * * 1'
+  # schedule:
+  #   - cron: '0 9 * * 1'
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN || '' }}
   CIBUILD_CI_TOKEN: ${{ secrets.CIBUILD_CI_TOKEN || '' }}
@@ -100,3 +100,88 @@ jobs:
             ${{ runner.temp }}/cibuild-output/provenance-linux-arm64.slsa.json
             ${{ runner.temp }}/cibuild-output/digests.json
             ${{ runner.temp }}/cibuild-output/cert.json
+
+# name: cibuilder
+
+# on:
+#   push:
+#     branches: [main]
+#   schedule:
+#     - cron: '0 4 * * 1'  # weekly monday 04:00 UTC
+#   workflow_dispatch:
+
+# jobs:
+#   # ============================================================
+#   # Build all targets in a matrix
+#   # Each target gets its own tag: cibuilder:full, cibuilder:nix etc.
+#   # ============================================================
+#   build:
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         target: [base, nix, buildctl, buildx, kaniko, full]
+
+#     runs-on: ubuntu-latest
+
+#     permissions:
+#       contents: read
+#       packages: write
+#       id-token: write
+
+#     steps:
+#       - uses: actions/checkout@v4
+
+#       - uses: stack4ops/actions-cibuilder@v1
+#         with:
+#           run_cmd: build
+#           bin_ref: main
+#         env:
+#           # each target builds independently with its own tag
+#           CIBUILD_BUILD_OPTS: --opt target=${{ matrix.target }}
+#           CIBUILD_BUILD_TAG: ${{ github.ref_name }}-${{ matrix.target }}
+#           CIBUILD_BUILD_SBOM: 1
+#           CIBUILD_BUILD_SBOM_BACKEND: trivy
+
+#   # ============================================================
+#   # Release all targets after all builds succeed
+#   # ============================================================
+#   release:
+#     needs: build
+#     if: github.ref_name == 'main'
+
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         target: [base, nix, buildctl, buildx, kaniko, full]
+
+#     runs-on: ubuntu-latest
+
+#     permissions:
+#       contents: write
+#       packages: write
+#       id-token: write
+
+#     steps:
+#       - uses: actions/checkout@v4
+
+#       - uses: stack4ops/actions-cibuilder@v1
+#         with:
+#           run_cmd: release
+#           bin_ref: main
+#         env:
+#           CIBUILD_BUILD_TAG: ${{ github.ref_name }}-${{ matrix.target }}
+#           # release tag = target name (e.g. :full, :nix, :buildctl)
+#           CIBUILD_RELEASE_IMAGE_TAGS: ${{ matrix.target }}
+#           CIBUILD_RELEASE_COSIGN_SIGNATURE: 1
+
+#       - uses: softprops/action-gh-release@v2
+#         with:
+#           tag_name: ${{ github.ref_name }}-${{ matrix.target }}-latest
+#           name: ${{ github.ref_name }} ${{ matrix.target }} latest
+#           prerelease: true
+#           make_latest: ${{ matrix.target == 'full' }}
+#           generate_release_notes: false
+#           files: |
+#             ${{ runner.temp }}/cibuild-output/sbom-linux-amd64.spdx.json
+#             ${{ runner.temp }}/cibuild-output/sbom-linux-arm64.spdx.json
+#             ${{ runner.temp }}/cibuild-output/digests.json

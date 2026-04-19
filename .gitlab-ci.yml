@@ -95,3 +95,156 @@ release:
     CIBUILD_RUN_CMD: release
   script:
     - /bin/true
+
+
+# ---
+# variables:
+#   CIBUILDER_IMAGE: "ghcr.io/stack4ops/cibuilder"
+#   CIBUILDER_REF: "full"  # use full image to build all targets
+
+# image: "${CIBUILDER_IMAGE}:${CIBUILDER_REF}"
+
+# workflow:
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "web"
+#     - if: $CI_PIPELINE_SOURCE == "schedule"
+#     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "main"
+#     - when: never
+
+# stages:
+#   - build
+#   - release
+
+# # ----------------------------------------------------------------
+# # build matrix — one job per target, parallel
+# # ----------------------------------------------------------------
+# .build_template: &build_template
+#   stage: build
+#   variables:
+#     CIBUILDER_BIN_REF: main
+#     CIBUILD_RUN_CMD: build
+#     CIBUILD_BUILD_SBOM: "1"
+#     CIBUILD_BUILD_SBOM_BACKEND: trivy
+#   script:
+#     - /bin/true
+
+# build-base:
+#   <<: *build_template
+#   variables:
+#     CIBUILD_BUILD_OPTS: "--opt target=base"
+#     CIBUILD_BUILD_TAG: "${CI_COMMIT_REF_NAME}-base"
+#   parallel:
+#     matrix:
+#       - RUNNER: [saas-linux-medium-amd64, saas-linux-medium-arm64]
+#   tags:
+#     - ${RUNNER}
+
+# build-nix:
+#   <<: *build_template
+#   variables:
+#     CIBUILD_BUILD_OPTS: "--opt target=nix"
+#     CIBUILD_BUILD_TAG: "${CI_COMMIT_REF_NAME}-nix"
+#   parallel:
+#     matrix:
+#       - RUNNER: [saas-linux-medium-amd64, saas-linux-medium-arm64]
+#   tags:
+#     - ${RUNNER}
+
+# build-buildctl:
+#   <<: *build_template
+#   variables:
+#     CIBUILD_BUILD_OPTS: "--opt target=buildctl"
+#     CIBUILD_BUILD_TAG: "${CI_COMMIT_REF_NAME}-buildctl"
+#   parallel:
+#     matrix:
+#       - RUNNER: [saas-linux-medium-amd64, saas-linux-medium-arm64]
+#   tags:
+#     - ${RUNNER}
+
+# build-buildx:
+#   <<: *build_template
+#   variables:
+#     CIBUILD_BUILD_OPTS: "--opt target=buildx"
+#     CIBUILD_BUILD_TAG: "${CI_COMMIT_REF_NAME}-buildx"
+#   parallel:
+#     matrix:
+#       - RUNNER: [saas-linux-medium-amd64, saas-linux-medium-arm64]
+#   tags:
+#     - ${RUNNER}
+
+# build-kaniko:
+#   <<: *build_template
+#   variables:
+#     CIBUILD_BUILD_OPTS: "--opt target=kaniko"
+#     CIBUILD_BUILD_TAG: "${CI_COMMIT_REF_NAME}-kaniko"
+#   parallel:
+#     matrix:
+#       - RUNNER: [saas-linux-medium-amd64, saas-linux-medium-arm64]
+#   tags:
+#     - ${RUNNER}
+
+# build-full:
+#   <<: *build_template
+#   variables:
+#     CIBUILD_BUILD_OPTS: "--opt target=full"
+#     CIBUILD_BUILD_TAG: "${CI_COMMIT_REF_NAME}-full"
+#   parallel:
+#     matrix:
+#       - RUNNER: [saas-linux-medium-amd64, saas-linux-medium-arm64]
+#   tags:
+#     - ${RUNNER}
+
+# # ----------------------------------------------------------------
+# # release matrix — one job per target
+# # ----------------------------------------------------------------
+# .release_template: &release_template
+#   stage: release
+#   variables:
+#     CIBUILDER_BIN_REF: main
+#     CIBUILD_RUN_CMD: release
+#   script:
+#     - /bin/true
+#   only:
+#     - main
+
+# release-base:
+#   <<: *release_template
+#   variables:
+#     CIBUILD_BUILD_TAG: "${CI_COMMIT_REF_NAME}-base"
+#     CIBUILD_RELEASE_IMAGE_TAGS: "base"
+#   needs: [build-base]
+
+# release-nix:
+#   <<: *release_template
+#   variables:
+#     CIBUILD_BUILD_TAG: "${CI_COMMIT_REF_NAME}-nix"
+#     CIBUILD_RELEASE_IMAGE_TAGS: "nix"
+#   needs: [build-nix]
+
+# release-buildctl:
+#   <<: *release_template
+#   variables:
+#     CIBUILD_BUILD_TAG: "${CI_COMMIT_REF_NAME}-buildctl"
+#     CIBUILD_RELEASE_IMAGE_TAGS: "buildctl"
+#   needs: [build-buildctl]
+
+# release-buildx:
+#   <<: *release_template
+#   variables:
+#     CIBUILD_BUILD_TAG: "${CI_COMMIT_REF_NAME}-buildx"
+#     CIBUILD_RELEASE_IMAGE_TAGS: "buildx"
+#   needs: [build-buildx]
+
+# release-kaniko:
+#   <<: *release_template
+#   variables:
+#     CIBUILD_BUILD_TAG: "${CI_COMMIT_REF_NAME}-kaniko"
+#     CIBUILD_RELEASE_IMAGE_TAGS: "kaniko"
+#   needs: [build-kaniko]
+
+# release-full:
+#   <<: *release_template
+#   variables:
+#     CIBUILD_BUILD_TAG: "${CI_COMMIT_REF_NAME}-full"
+#     CIBUILD_RELEASE_IMAGE_TAGS: "full"
+#   needs: [build-full]

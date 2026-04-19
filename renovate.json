@@ -1,0 +1,140 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base"
+  ],
+
+  "pinDigests": true,
+
+  "dockerfile": {
+    "enabled": true
+  },
+
+  "nix": {
+    "enabled": true
+  },
+
+  "github-actions": {
+    "enabled": true
+  },
+
+  "schedule": ["every weekend"],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+
+  "packageRules": [
+
+    {
+      "description": "debian base image — digest-only updates, manual review required",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["debian"],
+      "versioning": "docker",
+      "automerge": false,
+      "labels": ["dependencies", "base-image"],
+      "commitMessagePrefix": "fix(base):"
+    },
+
+    {
+      "description": "buildkit — semver + digest pinning, manual review",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["moby/buildkit"],
+      "versioning": "semver",
+      "automerge": false,
+      "labels": ["dependencies", "buildkit"],
+      "commitMessagePrefix": "chore(buildkit):"
+    },
+
+    {
+      "description": "docker CLI — semver updates, manual review",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["docker"],
+      "versioning": "semver",
+      "automerge": false,
+      "labels": ["dependencies", "docker"],
+      "commitMessagePrefix": "chore(docker):"
+    },
+
+    {
+      "description": "kaniko — semver updates, manual review",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["martizih/kaniko"],
+      "versioning": "semver",
+      "automerge": false,
+      "labels": ["dependencies", "kaniko"],
+      "commitMessagePrefix": "chore(kaniko):"
+    },
+
+    {
+      "description": "nix flake inputs — auto-merge",
+      "matchManagers": ["nix"],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash",
+      "labels": ["dependencies", "nix"],
+      "commitMessagePrefix": "chore(nix):"
+    },
+
+    {
+      "description": "GitHub Actions — auto-merge",
+      "matchManagers": ["github-actions"],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash",
+      "labels": ["dependencies", "ci"],
+      "commitMessagePrefix": "chore(ci):"
+    },
+
+    {
+      "description": "binary tool updates in Dockerfile — manual review",
+      "matchManagers": ["custom.regex"],
+      "automerge": false,
+      "labels": ["dependencies", "tools"],
+      "commitMessagePrefix": "chore(tools):"
+    },
+
+    {
+      "description": "all docker images — always pin digests",
+      "matchDatasources": ["docker"],
+      "pinDigests": true
+    }
+
+  ],
+
+  "customManagers": [
+    {
+      "description": "regctl binary in Dockerfile",
+      "customType": "regex",
+      "fileMatch": ["Dockerfile"],
+      "matchStrings": [
+        "regclient\\/releases\\/download\\/v(?<currentValue>[\\d.]+)\\/regctl"
+      ],
+      "depNameTemplate": "regclient/regclient",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
+    },
+    {
+      "description": "cosign binary in Dockerfile",
+      "customType": "regex",
+      "fileMatch": ["Dockerfile"],
+      "matchStrings": [
+        "cosign\\/releases\\/download\\/v(?<currentValue>[\\d.]+)\\/cosign"
+      ],
+      "depNameTemplate": "sigstore/cosign",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
+    },
+    {
+      "description": "trivy binary in Dockerfile",
+      "customType": "regex",
+      "fileMatch": ["Dockerfile"],
+      "matchStrings": [
+        "trivy_(?<currentValue>[\\d.]+)_Linux"
+      ],
+      "depNameTemplate": "aquasecurity/trivy",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
+    }
+  ],
+
+  "labels": ["renovate"]
+}
