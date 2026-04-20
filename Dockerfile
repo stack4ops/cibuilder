@@ -126,13 +126,14 @@ RUN case "$TARGETARCH" in \
     && chmod +x /usr/local/bin/cosign
 
 # trivy — pinned to v0.70.0+ (v0.69.4/5/6 were compromised March 2026)
+# trivy uses non-standard arch naming: amd64 -> 64bit, arm64 -> ARM64
 RUN case "$TARGETARCH" in \
-      amd64) ARCH="amd64" ;; \
-      arm64) ARCH="arm64" ;; \
+      amd64) TRIVY_ARCH="64bit" ;; \
+      arm64) TRIVY_ARCH="ARM64" ;; \
       *) echo "Unsupported TARGETARCH: $TARGETARCH"; exit 1 ;; \
     esac \
     && curl -fsSL \
-       "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-${ARCH^^}.tar.gz" \
+       "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-${TRIVY_ARCH}.tar.gz" \
        | tar xz trivy \
     && mv trivy /usr/local/bin/trivy
 

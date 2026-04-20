@@ -34,7 +34,7 @@ The image **builds and updates itself** using cibuild: a scheduled weekly pipeli
 | `jq` | JSON processing (layer comparison in the check run) |
 | `git`, `curl`, `bash`, `openssh` | General pipeline tooling |
 
-The [cibuild](https://github.com/stack4ops/cibuild) shell libs are embedded at `/home/user/bin/` and are invoked via the `cibuild_entrypoint.sh`.
+The [cibuild](https://github.com/stack4ops/cibuild) shell libs are embedded at `/home/cibuilder/bin/` and are invoked via the `cibuild_entrypoint.sh`.
 
 CA certificates for the local lab registry (`localregistry.example.com`) are pre-installed, so the image works out of the box with the [cibuild local lab](https://github.com/stack4ops/cibuild/tree/main/installer).
 
