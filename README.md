@@ -12,55 +12,55 @@
 
 # cibuilder
 
-The container image that powers [cibuild](https://github.com/stack4ops/cibuild) pipelines. Based on `moby/buildkit:rootless`, extended with all tools needed to run the full cibuild pipeline — check, build, test, and release — in a single image.
+The container image that powers [cibuild](https://github.com/stack4ops/cibuild) pipelines. Based on `debian:13-slim` (trixie), extended with all tools needed to run the full cibuild pipeline — check, build, test, and release.
 
-The image **builds and updates itself** using cibuild: a scheduled weekly pipeline rebuilds cibuilder from scratch, pulls the latest `buildkit:rootless` base, and re-embeds the current cibuild libs. No manual releases needed.
+The image comes in **focused variants** — each containing only the tools required for its build backend. A `full` variant combines all backends for local lab use.
+
+---
+
+## Image Variants
+
+| Tag | Base | Build Backend | Use Case |
+|-----|------|---------------|----------|
+| `base` | debian:13-slim | — | Foundation only, no build backend |
+| `buildctl` | base | buildctl + rootlesskit | Default CI — daemonless BuildKit |
+| `buildx` | base | docker CLI + buildx | Docker-based builds |
+| `kaniko` | base | kaniko executor | Rootless Kubernetes builds |
+| `nix` | base + nix | nix build | Declarative, reproducible image builds |
+| `full` | base + all | all of the above | Local lab / development |
+
+All variants share the same `debian:13-slim` foundation and common tooling. Base image and tool versions are pinned and updated automatically via [Renovate](renovate.json).
+
+> **ZenDIS alignment:** The base image can be swapped to `registry.opencode.de/oci-community/images/zendis/debian` for BSI-compliant deployments. Only the `FROM` line changes — everything else stays the same.
 
 ---
 
 ## What's Inside
 
-`moby/buildkit:rootless` is the base. On top of it:
+All variants include:
 
 | Tool | Purpose |
 |------|---------|
-| `buildctl` | Direct communication with BuildKit daemons over mTLS (embedded in base) |
-| `buildctl-daemonless.sh` | Runs an ephemeral BuildKit daemon inline — no separate daemon process needed |
-| `docker` CLI + `buildx` plugin | `buildx` builds with `dockercontainer`, `remote`, and `kubernetes` drivers |
-| `/kaniko/executor` | Daemonless image builds as root (copied from `martizih/kaniko`) |
-| `regctl` | Multi-platform image index assembly, tag management, and signature cleanup |
+| `regctl` | Multi-platform image index assembly, tag management, signature cleanup |
 | `cosign` | Keyless and key-based image signing and verification |
+| `trivy` | SBOM generation (SPDX/CycloneDX) and CVE scanning |
 | `kubectl` | Running and inspecting test containers in Kubernetes |
-| `jq` | JSON processing (layer comparison in the check run) |
+| `jq` | JSON processing |
 | `git`, `curl`, `bash`, `openssh` | General pipeline tooling |
 
-The [cibuild](https://github.com/stack4ops/cibuild) shell libs are embedded at `/home/cibuilder/bin/` and are invoked via the `cibuild_entrypoint.sh`.
+Additional tools per variant:
+
+| Variant | Extra Tools |
+|---------|-------------|
+| `buildctl` | `buildkitd`, `buildctl`, `rootlesskit`, `newuidmap`, `newgidmap`, `buildctl-daemonless.sh` |
+| `buildx` | `docker` CLI, `docker-buildx` plugin |
+| `kaniko` | `/kaniko/executor` |
+| `nix` | Nix single-user installation, `nix` CLI |
+| `full` | All of the above |
+
+The [cibuild](https://github.com/stack4ops/cibuild) shell libs are embedded at `/home/cibuilder/bin/` and invoked via `cibuild_entrypoint.sh`.
 
 CA certificates for the local lab registry (`localregistry.example.com`) are pre-installed, so the image works out of the box with the [cibuild local lab](https://github.com/stack4ops/cibuild/tree/main/installer).
-
----
-
-## How It Builds Itself
-
-The pipeline uses cibuilder to build cibuilder. This works because the image tag (`rootless`) is stable — the running cibuilder container and the freshly built one are different versions only during the brief build window.
-
-The `cibuild.env` in this repo configures the self-build:
-
-```sh
-CIBUILD_BUILD_NATIVE=1        # build for the runner's own architecture
-CIBUILD_BUILD_TAG=rootless     # stable tag, not a branch/commit tag
-CIBUILD_BUILD_USE_CACHE=0      # always build fresh — picks up base image updates
-CIBUILD_CHECK_ENABLED=1        # cancel if buildkit:rootless base hasn't changed
-```
-
-The check run compares the base image layers of the currently running `buildkit:rootless` against the last built cibuilder image. If nothing changed upstream, the pipeline is canceled. If the base has been updated, a full rebuild runs.
-
-The release run tags the new image with:
-- `rootless` — the stable pull tag
-- `__DATETIME__` — a timestamped snapshot tag (e.g. `2025-04-14_09-00-00`)
-- `__MINORTAG__` — the minor version tag of the `buildkit:rootless` base (resolved via `CIBUILD_RELEASE_MINOR_TAG_REGEX`)
-
-The GitHub Actions pipeline builds natively on `ubuntu-latest` (amd64) and `ubuntu-24.04-arm` (arm64) in parallel, then assembles the multi-platform index in the release job.
 
 ---
 
@@ -72,29 +72,60 @@ The container is driven entirely by the `CIBUILD_RUN_CMD` environment variable. 
 docker run --rm \
   -e CIBUILD_RUN_CMD=build \
   -v $(pwd):/workspace \
-  ghcr.io/stack4ops/cibuilder:rootless
+  ghcr.io/stack4ops/cibuilder:buildctl
 ```
 
 Supported values for `CIBUILD_RUN_CMD`: `check`, `build`, `test`, `release`, `all`.
 
-The entrypoint wraps the run in `rootlesskit` by default (required for the embedded daemonless BuildKit). For kaniko builds, rootlesskit must be disabled:
+### buildctl (default)
+
+The `buildctl` variant runs with rootlesskit by default — required for the embedded daemonless BuildKit:
 
 ```sh
-CIBUILDER_ROOTLESS_KIT=0   # disable rootlesskit
-CIBUILDER_USER="0:$(id -g)"  # run as root
-CIBUILDER_PRIVILEGED=0       # no privileged container needed for kaniko
+CIBUILDER_ROOTLESS_KIT=1
+CIBUILDER_USER="1000:$(id -g)"
+CIBUILDER_PRIVILEGED=1
+```
+
+### kaniko
+
+The `kaniko` variant runs as root without rootlesskit:
+
+```sh
+CIBUILDER_ROOTLESS_KIT=0
+CIBUILDER_USER="0:$(id -g)"
+CIBUILDER_PRIVILEGED=0
+```
+
+### nix
+
+The `nix` variant runs as `cibuilder` (uid 1000) without rootlesskit. Sandbox mode is auto-detected at runtime:
+
+```sh
+CIBUILDER_ROOTLESS_KIT=0    # nix needs no kernel features
+CIBUILDER_USER="1000:$(id -g)"
+CIBUILDER_PRIVILEGED=0
+```
+
+Configure the nix build backend in your repo's `cibuild.env`:
+
+```sh
+CIBUILD_BUILD_CLIENT=nix
+CIBUILD_NIX_FLAKE_ATTR=default        # packages.<system>.default in flake.nix
+CIBUILD_BUILD_SBOM_BACKEND=trivy      # SBOM via trivy after build
+CIBUILD_NIX_CACHE_URL=https://...     # optional: Attic/Cachix cache URL
+CIBUILD_NIX_CACHE_TOKEN=...           # optional: cache auth token
 ```
 
 ### Dynamic lib loading
 
-At startup, `cibuild_entrypoint.sh` checks for `CIBUILDER_BIN_URL` and `CIBUILDER_BIN_REF`. If set, it downloads the specified version of the cibuild libs and replaces the embedded ones before running. This is used in the self-build pipeline (`CIBUILDER_BIN_REF: main`) to always run against the latest libs without rebuilding the image first.
+At startup, `cibuild_entrypoint.sh` checks for `CIBUILDER_BIN_URL` and `CIBUILDER_BIN_REF`. If set, it downloads the specified version of the cibuild libs and replaces the embedded ones before running:
 
 ```sh
-# use a specific branch or tag of cibuild libs at runtime
 CIBUILDER_BIN_REF=my-feature-branch
 ```
 
-Dynamic loading can be blocked by mounting an empty directory at `/tmp/cibuilder.locked` — useful in production environments where the embedded libs should be the only ones used:
+Dynamic loading can be blocked by mounting an empty directory at `/tmp/cibuilder.locked`:
 
 ```sh
 docker run --rm \
@@ -102,15 +133,25 @@ docker run --rm \
   ...
 ```
 
-When locked, pre/post scripts and test scripts are also blocked from executing.
+---
+
+## SBOM and Scanning
+
+All variants include `trivy` for backend-independent SBOM generation and CVE scanning. Configure in `cibuild.env`:
+
+```sh
+CIBUILD_BUILD_SBOM=1
+CIBUILD_BUILD_SBOM_BACKEND=trivy       # trivy (all backends) or buildkit (buildctl/buildx only)
+CIBUILD_BUILD_SBOM_FORMAT=spdx-json    # spdx-json or cyclonedx-json
+```
+
+SBOMs are written to `$CIBUILD_OUTPUT_DIR/sbom-<platform>.spdx.json` and published as release assets.
 
 ---
 
 ## Usage in CI
 
 ### GitHub Actions
-
-The pipeline uses the custom actions [`stack4ops/actions-cibuilder`](https://github.com/stack4ops/actions-cibuilder) and [`stack4ops/actions-cibuilder-dind`](https://github.com/stack4ops/actions-cibuilder-dind) (the DinD variant is used for the test run):
 
 ```yaml
 - uses: stack4ops/actions-cibuilder@v1
@@ -119,12 +160,20 @@ The pipeline uses the custom actions [`stack4ops/actions-cibuilder`](https://git
     bin_ref: main
 ```
 
+For the test run with Docker backend, use the DinD variant:
+
+```yaml
+- uses: stack4ops/actions-cibuilder-dind@v1
+  with:
+    run_cmd: test
+```
+
 ### GitLab CI
 
 The image is used directly as the job image. `CIBUILD_RUN_CMD` is set per job via `variables`, and the `script` block is just `/bin/true` — all logic runs in the entrypoint:
 
 ```yaml
-image: ghcr.io/stack4ops/cibuilder:rootless
+image: ghcr.io/stack4ops/cibuilder:buildctl
 
 build:
   variables:
@@ -133,7 +182,7 @@ build:
     - /bin/true
 ```
 
-For native multi-platform builds, define one job per architecture with matching runner tags:
+For native multi-platform builds:
 
 ```yaml
 build-amd64:
@@ -168,6 +217,45 @@ test:
 
 ---
 
+## Building Locally (wip documentation...)
+
+To build a specific variant locally against the [cibuild local lab](https://github.com/stack4ops/cibuild/tree/main/installer) registry:
+
+```sh
+# create a builder in the lab network (once)
+docker buildx inspect cibuilder-local > /dev/null 2>&1 || \
+  docker buildx create \
+    --name cibuilder-local \
+    --driver docker-container \
+    --driver-opt network=cibuilder-net \
+    --config ./buildkitd.local.toml
+
+docker buildx use cibuilder-local
+
+# build a specific target
+docker buildx build \
+  --target full \
+  --platform linux/amd64 \
+  --tag localregistry.example.com:5000/stack4ops/cibuilder:full \
+  --push \
+  .
+```
+
+Build all targets at once:
+
+```sh
+for target in base nix buildctl buildx kaniko full; do
+  docker buildx build \
+    --target ${target} \
+    --platform linux/amd64 \
+    --tag localregistry.example.com:5000/stack4ops/cibuilder:${target} \
+    --push \
+    .
+done
+```
+
+---
+
 ## Local Development
 
-To use cibuilder locally or to develop and test cibuild itself, see the [cibuild local lab](https://github.com/stack4ops/cibuild/tree/main/installer). It provides a fully pre-configured environment including DinD, a local registry, a k3d Kubernetes cluster, and all required service accounts — installed with a single script.
+To use cibuilder locally or to develop and test cibuild itself, see the [cibuild local lab](https://github.com/stack4ops/cibuild/tree/main/installer). It provides a fully pre-configured environment including DinD, a local registry, an Attic Nix binary cache, a k3d Kubernetes cluster, and all required service accounts — installed with a single script.
