@@ -3,99 +3,156 @@
   "extends": [
     "config:base"
   ],
-
   "pinDigests": true,
-
   "dockerfile": {
     "enabled": true
   },
-
   "nix": {
     "enabled": true
   },
-
   "github-actions": {
     "enabled": true
   },
-
-  "schedule": ["every weekend"],
+  "schedule": [
+    "every weekend"
+  ],
   "prConcurrentLimit": 5,
   "prHourlyLimit": 2,
-
   "packageRules": [
     {
-      "description": "debian base image — digest updates, always manual review",
-      "matchDatasources": ["docker"],
-      "matchPackageNames": ["debian"],
+      "description": "debian base image \u2014 digest updates, always manual review",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "debian"
+      ],
       "versioning": "docker",
       "automerge": false,
-      "labels": ["dependencies", "base-image"],
+      "labels": [
+        "dependencies",
+        "base-image"
+      ],
       "commitMessagePrefix": "fix(base):"
     },
     {
-      "description": "buildkit — manual review (kernel-level impact)",
-      "matchDatasources": ["docker"],
-      "matchPackageNames": ["moby/buildkit"],
+      "description": "docker CLI \u2014 manual review",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "docker"
+      ],
       "versioning": "semver",
       "automerge": false,
-      "labels": ["dependencies", "buildkit"],
-      "commitMessagePrefix": "chore(buildkit):"
-    },
-    {
-      "description": "docker CLI — manual review",
-      "matchDatasources": ["docker"],
-      "matchPackageNames": ["docker"],
-      "versioning": "semver",
-      "automerge": false,
-      "labels": ["dependencies", "docker"],
+      "labels": [
+        "dependencies",
+        "docker"
+      ],
       "commitMessagePrefix": "chore(docker):"
     },
     {
-      "description": "kaniko — manual review",
-      "matchDatasources": ["docker"],
-      "matchPackageNames": ["martizih/kaniko"],
+      "description": "buildkit + rootlesskit \u2014 manual review (kernel-level impact)",
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchPackageNames": [
+        "moby/buildkit",
+        "rootless-containers/rootlesskit"
+      ],
+      "automerge": false,
+      "labels": [
+        "dependencies",
+        "buildkit"
+      ],
+      "commitMessagePrefix": "chore(buildkit):"
+    },
+    {
+      "description": "kaniko \u2014 manual review",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "martizih/kaniko"
+      ],
       "versioning": "semver",
       "automerge": false,
-      "labels": ["dependencies", "kaniko"],
+      "labels": [
+        "dependencies",
+        "kaniko"
+      ],
       "commitMessagePrefix": "chore(kaniko):"
     },
     {
-      "description": "binary tools (regctl, cosign, trivy) — manual review (supply chain sensitive)",
-      "matchManagers": ["custom.regex"],
+      "description": "binary tools (regctl, cosign, trivy) \u2014 manual review (supply chain sensitive)",
+      "matchManagers": [
+        "custom.regex"
+      ],
       "automerge": false,
-      "labels": ["dependencies", "tools"],
+      "labels": [
+        "dependencies",
+        "tools"
+      ],
       "commitMessagePrefix": "chore(tools):"
     },
     {
-      "description": "nix flake inputs — auto-merge",
-      "matchManagers": ["nix"],
+      "description": "nix flake inputs \u2014 auto-merge",
+      "matchManagers": [
+        "nix"
+      ],
       "automerge": true,
       "automergeType": "pr",
       "automergeStrategy": "squash",
-      "labels": ["dependencies", "nix"],
+      "labels": [
+        "dependencies",
+        "nix"
+      ],
       "commitMessagePrefix": "chore(nix):"
     },
     {
-      "description": "GitHub Actions — auto-merge",
-      "matchManagers": ["github-actions"],
+      "description": "GitHub Actions \u2014 auto-merge",
+      "matchManagers": [
+        "github-actions"
+      ],
       "automerge": true,
       "automergeType": "pr",
       "automergeStrategy": "squash",
-      "labels": ["dependencies", "ci"],
+      "labels": [
+        "dependencies",
+        "ci"
+      ],
       "commitMessagePrefix": "chore(ci):"
     },
     {
-      "description": "all docker images — always pin digests",
-      "matchDatasources": ["docker"],
+      "description": "all docker images \u2014 always pin digests",
+      "matchDatasources": [
+        "docker"
+      ],
       "pinDigests": true
+    },
+    {
+      "description": "binfmt \u2014 manual review (QEMU binary, architecture-level impact)",
+      "matchManagers": [
+        "dockerfile"
+      ],
+      "matchPackageNames": [
+        "tonistiigi/binfmt"
+      ],
+      "automerge": false,
+      "labels": [
+        "dependencies",
+        "buildkit"
+      ],
+      "commitMessagePrefix": "chore(buildkit):"
     }
   ],
-
   "customManagers": [
     {
       "description": "regctl ARG version in Dockerfile",
       "customType": "regex",
-      "fileMatch": ["(^|/)Dockerfile$"],
+      "fileMatch": [
+        "(^|/)Dockerfile$"
+      ],
       "matchStrings": [
         "datasource=github-releases depName=regclient/regclient\\s+ARG REGCTL_VERSION=(?<currentValue>[\\d.]+)"
       ],
@@ -106,7 +163,9 @@
     {
       "description": "cosign ARG version in Dockerfile",
       "customType": "regex",
-      "fileMatch": ["(^|/)Dockerfile$"],
+      "fileMatch": [
+        "(^|/)Dockerfile$"
+      ],
       "matchStrings": [
         "datasource=github-releases depName=sigstore/cosign\\s+ARG COSIGN_VERSION=(?<currentValue>[\\d.]+)"
       ],
@@ -117,15 +176,44 @@
     {
       "description": "trivy ARG version in Dockerfile",
       "customType": "regex",
-      "fileMatch": ["(^|/)Dockerfile$"],
+      "fileMatch": [
+        "(^|/)Dockerfile$"
+      ],
       "matchStrings": [
         "datasource=github-releases depName=aquasecurity/trivy\\s+ARG TRIVY_VERSION=(?<currentValue>[\\d.]+)"
       ],
       "depNameTemplate": "aquasecurity/trivy",
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "semver"
+    },
+    {
+      "description": "buildkit ARG version in Dockerfile",
+      "customType": "regex",
+      "fileMatch": [
+        "(^|/)Dockerfile$"
+      ],
+      "matchStrings": [
+        "datasource=github-releases depName=moby/buildkit\\s+ARG BUILDKIT_VERSION=(?<currentValue>[\\d.]+)"
+      ],
+      "depNameTemplate": "moby/buildkit",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
+    },
+    {
+      "description": "rootlesskit ARG version in Dockerfile",
+      "customType": "regex",
+      "fileMatch": [
+        "(^|/)Dockerfile$"
+      ],
+      "matchStrings": [
+        "datasource=github-releases depName=rootless-containers/rootlesskit\\s+ARG ROOTLESSKIT_VERSION=(?<currentValue>[\\d.]+)"
+      ],
+      "depNameTemplate": "rootless-containers/rootlesskit",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
     }
   ],
-
-  "labels": ["renovate"]
+  "labels": [
+    "renovate"
+  ]
 }
