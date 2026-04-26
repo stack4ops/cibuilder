@@ -7,15 +7,16 @@
 #
 #   base              minimal foundation: curl + git + jq + openssh
 #   check             base + regctl          (layer diff against registry)
-#   build-buildctl    base + buildctl + rootlesskit
+#   build-buildctl    base + buildctl + rootlesskit + runc + binfmt QEMU helpers
 #   build-buildx      base + docker CLI + buildx plugin
 #   build-nix         base + nix store
 #   build-kaniko      base + kaniko executor (runs as root)
 #   test-docker       base + docker CLI
 #   test-k8s          base + kubectl
 #   release           base + regctl + cosign + trivy
-#   full              all of the above (lab / development)
+#   all               all of the above (lab / development)
 #
+# All tools installed from GitHub Releases or apt — no Alpine image sources
 # K8s-friendly: base/check/build-*/release contain no docker CLI
 #
 # ZenDIS alignment: swap base image when registry access is available:
@@ -29,13 +30,18 @@ ARG REGCTL_VERSION=0.8.1
 ARG COSIGN_VERSION=3.0.6
 # renovate: datasource=github-releases depName=aquasecurity/trivy
 ARG TRIVY_VERSION=0.70.0
+# renovate: datasource=github-releases depName=moby/buildkit
+ARG BUILDKIT_VERSION=0.21.0
+# renovate: datasource=github-releases depName=rootless-containers/rootlesskit
+ARG ROOTLESSKIT_VERSION=2.3.5
 
 # ---- external image sources — updated by Renovate ----
 # renovate: datasource=docker
-FROM moby/buildkit:rootless AS buildkit-src
-
-# renovate: datasource=docker
 FROM docker:cli AS dockercli-src
+
+# binfmt QEMU helpers for cross-arch builds (amd64 building arm64 etc.)
+# renovate: datasource=docker
+FROM tonistiigi/binfmt:buildkit-v10.2.1-64@sha256:4cf4c0ad4919b18996362536883de02420c1010654d3c2a2b63e9b72600fa3a9 AS binfmt-src
 
 # renovate: datasource=docker
 FROM martizih/kaniko:v1.27.2 AS kaniko-src
@@ -88,18 +94,43 @@ ARG CIBUILDER_BIN_REF=main
 ENV TZ=Europe/Berlin
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/cibuilder/bin
+ENV HOME=/home/cibuilder
+ENV USER=cibuilder
+# XDG_RUNTIME_DIR is required by buildctl-daemonless.sh
+# was pre-set in moby/buildkit:rootless, must be explicit on debian base
+ENV XDG_RUNTIME_DIR=/run/user/1000
+# TMPDIR in home — avoids permission issues in rootless context
+ENV TMPDIR=/home/cibuilder/.local/tmp
+# BUILDKIT_HOST — default socket path for buildctl client
+ENV BUILDKIT_HOST=unix:///run/user/1000/buildkit/buildkitd.sock
+# buildkitd flags:
+# --root: use home dir, avoids /var/lib/buildkit permission issues
+# --oci-worker-no-process-sandbox: avoids /run/buildkit permission issues on debian
+ENV BUILDKITD_FLAGS="--root=/home/cibuilder/.local/share/buildkit --oci-worker-no-process-sandbox"
 
 RUN groupadd -g 1000 cibuilder \
-    && useradd -u 1000 -g cibuilder -m -s /bin/bash cibuilder
+    && useradd -u 1000 -g cibuilder -m -s /bin/bash cibuilder \
+    # runtime dirs for rootlesskit + buildkitd
+    && mkdir -p /run/user/1000 /run/buildkit \
+    && chown -R 1000:1000 /run/user/1000 /run/buildkit \
+    # home dirs matching moby/buildkit:rootless layout
+    && mkdir -p /home/cibuilder/.local/tmp /home/cibuilder/.local/share/buildkit \
+    && chown -R 1000:1000 /home/cibuilder \
+    # subuid/subgid required for rootlesskit user namespace + port-driver
+    && echo "cibuilder:100000:65536" | tee /etc/subuid | tee /etc/subgid
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        ca-certificates \
        curl \
+       fuse3 \
        git \
        jq \
+       netcat-openbsd \
        openssh-client \
+       pigz \
        tzdata \
+       xz-utils \
     && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
     && echo $TZ > /etc/timezone \
     && rm -rf /var/lib/apt/lists/*
@@ -159,20 +190,49 @@ ARG TARGETARCH
 
 USER root
 
-# uidmap must be installed via apt — COPY --from loses setuid capabilities
-# libcap2-bin provides setcap for cap_setuid/cap_setgid
+ARG BUILDKIT_VERSION
+ARG ROOTLESSKIT_VERSION
+
+# uidmap + runc via apt — setuid caps cannot survive COPY --from
+# runc: OCI worker required by buildkitd
+# libcap2-bin: provides setcap for newuidmap/newgidmap
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
+       fuse-overlayfs \
        libcap2-bin \
+       runc \
        uidmap \
        xz-utils \
     && setcap cap_setuid=ep /usr/bin/newuidmap cap_setgid=ep /usr/bin/newgidmap \
     && chmod 0755 /usr/bin/newuidmap /usr/bin/newgidmap \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=buildkit-src /usr/bin/buildkitd   /usr/local/bin/buildkitd
-COPY --from=buildkit-src /usr/bin/buildctl    /usr/local/bin/buildctl
-COPY --from=buildkit-src /usr/bin/rootlesskit /usr/local/bin/rootlesskit
+# buildkit (buildkitd + buildctl) — from GitHub releases, native Linux binary
+RUN case "$TARGETARCH" in \
+      amd64) ARCH="amd64" ;; \
+      arm64) ARCH="arm64" ;; \
+      *) echo "Unsupported TARGETARCH: $TARGETARCH"; exit 1 ;; \
+    esac \
+    && curl -fsSL \
+       "https://github.com/moby/buildkit/releases/download/v${BUILDKIT_VERSION}/buildkit-v${BUILDKIT_VERSION}.linux-${ARCH}.tar.gz" \
+       | tar xz -C /usr/local/bin/ --strip-components=1 bin/buildkitd bin/buildctl \
+    && chmod +x /usr/local/bin/buildkitd /usr/local/bin/buildctl
+
+# rootlesskit — from GitHub releases, native Linux binary
+# arch naming: amd64 → x86_64, arm64 → aarch64
+RUN case "$TARGETARCH" in \
+      amd64) ARCH="x86_64" ;; \
+      arm64) ARCH="aarch64" ;; \
+      *) echo "Unsupported TARGETARCH: $TARGETARCH"; exit 1 ;; \
+    esac \
+    && curl -fsSL \
+       "https://github.com/rootless-containers/rootlesskit/releases/download/v${ROOTLESSKIT_VERSION}/rootlesskit-${ARCH}.tar.gz" \
+       | tar xz -C /usr/local/bin/ rootlesskit \
+    && chmod +x /usr/local/bin/rootlesskit
+
+# binfmt QEMU helpers — enables cross-arch builds (e.g. arm64 on amd64 runner)
+# loongarch64/mips64/mips64el excluded (matching moby/buildkit:rootless filter)
+COPY --from=binfmt-src / /usr/local/bin/
 
 COPY ./buildctl-daemonless.sh /usr/local/bin/buildctl-daemonless.sh
 RUN chmod 755 /usr/local/bin/buildctl-daemonless.sh
@@ -184,6 +244,8 @@ RUN mkdir -p /home/cibuilder/.config/buildkit \
 
 ENV CIBUILD_RUN_CMD=build
 ENV CIBUILD_BUILD_CLIENT=buildctl
+# buildkit state volume — matching moby/buildkit:rootless VOLUME declaration
+VOLUME /home/cibuilder/.local/share/buildkit
 ENTRYPOINT ["cibuild_entrypoint.sh"]
 
 # =============================================================================
@@ -371,10 +433,12 @@ ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/cibu
 
 USER root
 
-# uidmap for rootlesskit
+# uidmap for rootlesskit + runc for buildkitd OCI worker
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
+       fuse-overlayfs \
        libcap2-bin \
+       runc \
        uidmap \
        xz-utils \
     && setcap cap_setuid=ep /usr/bin/newuidmap cap_setgid=ep /usr/bin/newgidmap \
@@ -425,10 +489,32 @@ RUN case "$TARGETARCH" in \
        > /usr/local/bin/kubectl \
     && chmod +x /usr/local/bin/kubectl
 
-# buildctl + rootlesskit
-COPY --from=buildkit-src /usr/bin/buildkitd   /usr/local/bin/buildkitd
-COPY --from=buildkit-src /usr/bin/buildctl    /usr/local/bin/buildctl
-COPY --from=buildkit-src /usr/bin/rootlesskit /usr/local/bin/rootlesskit
+# buildkit (buildkitd + buildctl) — from GitHub releases, native Linux binary
+ARG BUILDKIT_VERSION
+RUN case "$TARGETARCH" in \
+      amd64) ARCH="amd64" ;; \
+      arm64) ARCH="arm64" ;; \
+      *) echo "Unsupported TARGETARCH: $TARGETARCH"; exit 1 ;; \
+    esac \
+    && curl -fsSL \
+       "https://github.com/moby/buildkit/releases/download/v${BUILDKIT_VERSION}/buildkit-v${BUILDKIT_VERSION}.linux-${ARCH}.tar.gz" \
+       | tar xz -C /usr/local/bin/ --strip-components=1 bin/buildkitd bin/buildctl \
+    && chmod +x /usr/local/bin/buildkitd /usr/local/bin/buildctl
+
+# rootlesskit — from GitHub releases, native Linux binary
+ARG ROOTLESSKIT_VERSION
+RUN case "$TARGETARCH" in \
+      amd64) ARCH="x86_64" ;; \
+      arm64) ARCH="aarch64" ;; \
+      *) echo "Unsupported TARGETARCH: $TARGETARCH"; exit 1 ;; \
+    esac \
+    && curl -fsSL \
+       "https://github.com/rootless-containers/rootlesskit/releases/download/v${ROOTLESSKIT_VERSION}/rootlesskit-${ARCH}.tar.gz" \
+       | tar xz -C /usr/local/bin/ rootlesskit \
+    && chmod +x /usr/local/bin/rootlesskit
+
+# binfmt QEMU helpers — enables cross-arch builds (e.g. arm64 on amd64 runner)
+COPY --from=binfmt-src / /usr/local/bin/
 
 COPY ./buildctl-daemonless.sh /usr/local/bin/buildctl-daemonless.sh
 RUN chmod 755 /usr/local/bin/buildctl-daemonless.sh
