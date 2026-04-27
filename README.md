@@ -31,6 +31,7 @@ The container image that powers [cibuild](https://github.com/stack4ops/cibuild) 
 | `test-docker` | `test` | base + docker CLI | Test with Docker backend |
 | `test-k8s` | `test` | base + kubectl | Test with Kubernetes backend |
 | `release` | `release` | base + regctl + cosign + trivy | Index assembly, signing, SBOM |
+| `update` | `update` | base + trivy | Scheduled cache updates (trivy DB) |
 | `all` | `all` | everything | Local lab / development |
 
 Each image knows what it does — no `CIBUILD_RUN_CMD` needed in CI. The `all` variant accepts an override via `-e CIBUILD_RUN_CMD=build` for debugging.
@@ -64,11 +65,7 @@ All variants share the same `debian:13-slim` foundation. Base image and tool ver
 | `buildkitd`, `buildctl` | BuildKit daemon and client |
 | `rootlesskit` | User namespace setup for daemonless BuildKit |
 | `buildctl-daemonless.sh` | Runs ephemeral BuildKit inline — no separate daemon |
-| `runc` | OCI worker for BuildKit (via `runc` apt package) |
-| `fuse3`, `fuse-overlayfs` | Overlay filesystem for BuildKit snapshotter |
-| `binfmt` QEMU helpers | Cross-architecture builds (e.g. arm64 on amd64 runner) |
 | `newuidmap`, `newgidmap` | UID/GID mapping for rootless operation (via `uidmap` apt package + `setcap`) |
-| `netcat-openbsd` | Port reachability checks in the test run |
 
 ### `build-buildx`
 
@@ -109,6 +106,12 @@ All variants share the same `debian:13-slim` foundation. Base image and tool ver
 | `cosign` | Keyless and key-based image signing |
 | `trivy` | SBOM (SPDX + CycloneDX) and CVE scanning |
 
+### `update`
+
+| Tool | Purpose |
+|------|---------|
+| `trivy` | Downloads and refreshes the vulnerability DB into a mounted cache volume |
+
 The [cibuild](https://github.com/stack4ops/cibuild) shell libs are embedded at `/home/cibuilder/bin/` and invoked via `cibuild_entrypoint.sh`.
 
 CA certificates for the local lab registry (`localregistry.example.com`) are pre-installed so all variants work out of the box with the [cibuild local lab](https://github.com/stack4ops/cibuild/tree/main/installer).
@@ -132,6 +135,11 @@ docker run --rm --privileged -v $(pwd):/repo -w /repo \
 docker run --rm -v $(pwd):/repo -w /repo \
   ghcr.io/stack4ops/cibuilder:release
 ```
+
+# update run (scheduled cache refresh)
+docker run --rm \
+  -v cibuilder-trivy-cache:/home/cibuilder/.cache/trivy \
+  ghcr.io/stack4ops/cibuilder:update
 
 Override for the `all` variant:
 
@@ -279,6 +287,12 @@ test:
 release:
   image: ghcr.io/stack4ops/cibuilder:release
   script: [/bin/true]
+
+update:
+  image: ghcr.io/stack4ops/cibuilder:update
+  script: [/bin/true]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
 ```
 
 ---
@@ -293,6 +307,7 @@ Use `build-local.sh` to build all targets into the local Docker image store:
 
 # build a single target
 ./build-local.sh release
+./build-local.sh update
 ./build-local.sh build-nix
 ```
 

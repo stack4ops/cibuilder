@@ -7,7 +7,7 @@
 
 set -e
 
-TARGETS="base check build-buildctl build-buildx build-nix build-kaniko test-docker test-k8s release all"
+TARGETS="base check build-buildctl build-buildx build-nix build-kaniko test-docker test-k8s release update all"
 
 if [ -n "${1:-}" ]; then
   TARGETS="$1"

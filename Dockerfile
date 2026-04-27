@@ -14,6 +14,7 @@
 #   test-docker       base + docker CLI
 #   test-k8s          base + kubectl
 #   release           base + regctl + cosign + trivy
+#   update            base + trivy (scheduled cache updates)
 #   all               all of the above (lab / development)
 #
 # All tools installed from GitHub Releases or apt — no Alpine image sources
@@ -424,6 +425,30 @@ RUN case "$TARGETARCH" in \
 USER cibuilder
 
 ENV CIBUILD_RUN_CMD=release
+ENTRYPOINT ["cibuild_entrypoint.sh"]
+
+# =============================================================================
+# UPDATE — base + trivy (for scheduled cache updates)
+# cibuild -r update
+# =============================================================================
+FROM base AS update
+
+ARG TRIVY_VERSION
+RUN case "$TARGETARCH" in \
+      amd64) ARCH="64bit" ;; \
+      arm64) ARCH="ARM64" ;; \
+      *) echo "Unsupported TARGETARCH: $TARGETARCH"; exit 1 ;; \
+    esac \
+    && curl -fsSL \
+       "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-${ARCH}.tar.gz" \
+       | tar xz -C /usr/local/bin/ trivy \
+    && chmod +x /usr/local/bin/trivy
+
+USER cibuilder
+
+ENV CIBUILD_RUN_CMD=update
+ENV CIBUILD_UPDATE_ENABLED=1
+ENV CIBUILD_UPDATE_TRIVY_DB=1
 ENTRYPOINT ["cibuild_entrypoint.sh"]
 
 # =============================================================================
