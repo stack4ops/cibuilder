@@ -115,6 +115,8 @@ RUN groupadd -g 1000 cibuilder \
     && chown -R 1000:1000 /run/user/1000 /run/buildkit \
     # home dirs matching moby/buildkit:rootless layout
     && mkdir -p /home/cibuilder/.local/tmp /home/cibuilder/.local/share/buildkit \
+    # trivy cache dir — pre-create with correct ownership so volume mounts work
+    && mkdir -p /home/cibuilder/.cache/trivy \
     && chown -R 1000:1000 /home/cibuilder \
     # subuid/subgid required for rootlesskit user namespace + port-driver
     && echo "cibuilder:100000:65536" | tee /etc/subuid | tee /etc/subgid
