@@ -64,7 +64,11 @@ All variants share the same `debian:13-slim` foundation. Base image and tool ver
 | `buildkitd`, `buildctl` | BuildKit daemon and client |
 | `rootlesskit` | User namespace setup for daemonless BuildKit |
 | `buildctl-daemonless.sh` | Runs ephemeral BuildKit inline — no separate daemon |
+| `runc` | OCI worker for BuildKit (via `runc` apt package) |
+| `fuse3`, `fuse-overlayfs` | Overlay filesystem for BuildKit snapshotter |
+| `binfmt` QEMU helpers | Cross-architecture builds (e.g. arm64 on amd64 runner) |
 | `newuidmap`, `newgidmap` | UID/GID mapping for rootless operation (via `uidmap` apt package + `setcap`) |
+| `netcat-openbsd` | Port reachability checks in the test run |
 
 ### `build-buildx`
 
@@ -143,8 +147,10 @@ Runs with rootlesskit — required for the embedded daemonless BuildKit:
 ```sh
 CIBUILDER_ROOTLESS_KIT=1
 CIBUILDER_USER="1000:$(id -g)"
-CIBUILDER_PRIVILEGED=1
+CIBUILDER_PRIVILEGED=0
 ```
+
+> rootlesskit runs as uid 1000 with `subuid`/`subgid` configured — no `--privileged` needed. The runner must support user namespaces (`/proc/sys/kernel/unprivileged_userns_clone=1`).
 
 ### build-nix
 
@@ -215,6 +221,7 @@ CIBUILD_RELEASE_SBOM=1                          # default: 1
 CIBUILD_RELEASE_SBOM_FORMATS=spdx-json,cyclonedx  # default: both
 CIBUILD_RELEASE_VULN=1                          # default: 1
 CIBUILD_RELEASE_VULN_FORMAT=json                # default: json
+CIBUILD_RELEASE_UPLOAD_SUPPLY_CHAIN_ARTIFACTS=package  # GitLab: upload to Generic Package Registry
 ```
 
 ---
