@@ -156,7 +156,7 @@ COPY ./cibuild_entrypoint.sh /usr/local/bin/cibuild_entrypoint.sh
 RUN chmod 755 /usr/local/bin/cibuild_entrypoint.sh
 
 USER cibuilder
-
+ARG FORCE_DOWNLOAD_CIBUILD
 RUN cd /home/cibuilder \
     && curl -fsSL "${CIBUILDER_BIN_URL}/${CIBUILDER_BIN_REF}.tar.gz" \
        | tar xzf - --strip-components=1 "cibuild-${CIBUILDER_BIN_REF}/bin" \
@@ -189,6 +189,7 @@ RUN case "$TARGETARCH" in \
 USER cibuilder
 
 ENV CIBUILD_RUN_CMD=check
+ENV CIBUILDER_ROOTLESS_KIT=0
 ENTRYPOINT ["cibuild_entrypoint.sh"]
 
 # =============================================================================
@@ -243,7 +244,7 @@ RUN case "$TARGETARCH" in \
 
 # binfmt QEMU helpers — enables cross-arch builds (e.g. arm64 on amd64 runner)
 # loongarch64/mips64/mips64el excluded (matching moby/buildkit:rootless filter)
-COPY --from=binfmt-src / /usr/local/bin/
+COPY --from=binfmt-src / /usr/bin/
 
 COPY ./buildctl-daemonless.sh /usr/local/bin/buildctl-daemonless.sh
 RUN chmod 755 /usr/local/bin/buildctl-daemonless.sh
@@ -255,6 +256,7 @@ RUN mkdir -p /home/cibuilder/.config/buildkit \
 
 ENV CIBUILD_RUN_CMD=build
 ENV CIBUILD_BUILD_CLIENT=buildctl
+ENV CIBUILDER_ROOTLESS_KIT=1
 # buildkit state volume — matching moby/buildkit:rootless VOLUME declaration
 VOLUME /home/cibuilder/.local/share/buildkit
 ENTRYPOINT ["cibuild_entrypoint.sh"]
@@ -277,6 +279,7 @@ USER cibuilder
 
 ENV CIBUILD_RUN_CMD=build
 ENV CIBUILD_BUILD_CLIENT=buildx
+ENV CIBUILDER_ROOTLESS_KIT=0
 ENTRYPOINT ["cibuild_entrypoint.sh"]
 
 # =============================================================================
@@ -305,6 +308,7 @@ USER cibuilder
 
 ENV CIBUILD_RUN_CMD=build
 ENV CIBUILD_BUILD_CLIENT=nix
+ENV CIBUILDER_ROOTLESS_KIT=0
 ENTRYPOINT ["cibuild_entrypoint.sh"]
 
 # =============================================================================
@@ -324,6 +328,7 @@ COPY --from=kaniko-src /kaniko/executor /kaniko/executor
 
 ENV CIBUILD_RUN_CMD=build
 ENV CIBUILD_BUILD_CLIENT=kaniko
+ENV CIBUILDER_ROOTLESS_KIT=0
 ENTRYPOINT ["cibuild_entrypoint.sh"]
 
 # =============================================================================
@@ -342,6 +347,7 @@ USER cibuilder
 
 ENV CIBUILD_RUN_CMD=test
 ENV CIBUILD_TEST_BACKEND=docker
+ENV CIBUILDER_ROOTLESS_KIT=0
 ENTRYPOINT ["cibuild_entrypoint.sh"]
 
 # =============================================================================
@@ -369,6 +375,7 @@ USER cibuilder
 
 ENV CIBUILD_RUN_CMD=test
 ENV CIBUILD_TEST_BACKEND=kubernetes
+ENV CIBUILDER_ROOTLESS_KIT=0
 ENTRYPOINT ["cibuild_entrypoint.sh"]
 
 # =============================================================================
@@ -425,6 +432,7 @@ RUN case "$TARGETARCH" in \
 USER cibuilder
 
 ENV CIBUILD_RUN_CMD=release
+ENV CIBUILDER_ROOTLESS_KIT=0
 ENTRYPOINT ["cibuild_entrypoint.sh"]
 
 # =============================================================================
@@ -434,6 +442,8 @@ ENTRYPOINT ["cibuild_entrypoint.sh"]
 FROM base AS update
 
 ARG TRIVY_VERSION
+ARG TARGETARCH
+USER root
 RUN case "$TARGETARCH" in \
       amd64) ARCH="64bit" ;; \
       arm64) ARCH="ARM64" ;; \
@@ -449,6 +459,7 @@ USER cibuilder
 ENV CIBUILD_RUN_CMD=update
 ENV CIBUILD_UPDATE_ENABLED=1
 ENV CIBUILD_UPDATE_TRIVY_DB=1
+ENV CIBUILDER_ROOTLESS_KIT=0
 ENTRYPOINT ["cibuild_entrypoint.sh"]
 
 # =============================================================================
@@ -549,7 +560,7 @@ RUN case "$TARGETARCH" in \
     && chmod +x /usr/local/bin/rootlesskit
 
 # binfmt QEMU helpers — enables cross-arch builds (e.g. arm64 on amd64 runner)
-COPY --from=binfmt-src / /usr/local/bin/
+COPY --from=binfmt-src / /usr/bin/
 
 COPY ./buildctl-daemonless.sh /usr/local/bin/buildctl-daemonless.sh
 RUN chmod 755 /usr/local/bin/buildctl-daemonless.sh
@@ -576,4 +587,5 @@ RUN mkdir -p /home/cibuilder/.config/buildkit \
     && touch /home/cibuilder/.config/buildkit/buildkitd.toml
 
 ENV CIBUILD_RUN_CMD=all
+ENV CIBUILDER_ROOTLESS_KIT=1
 ENTRYPOINT ["cibuild_entrypoint.sh"]
