@@ -14,7 +14,7 @@
 #   test-docker       base + docker CLI
 #   test-k8s          base + kubectl
 #   release           base + regctl + cosign + trivy
-#   update            base + trivy (scheduled cache updates)
+#   update-caches     base + trivy (scheduled cache updates)
 #   all               all of the above (lab / development)
 #
 # All tools installed from GitHub Releases or apt — no Alpine image sources
@@ -449,10 +449,10 @@ ENV CIBUILDER_ROOTLESS_KIT=0
 ENTRYPOINT ["cibuild_entrypoint.sh"]
 
 # =============================================================================
-# UPDATE — base + trivy (for scheduled cache updates)
-# cibuild -r update
+# UPDATE-CACHES — base + trivy (for scheduled cache updates)
+# cibuild -r update-caches
 # =============================================================================
-FROM base AS update
+FROM base AS update-caches
 
 ARG TRIVY_VERSION
 ARG TARGETARCH
@@ -469,9 +469,9 @@ RUN case "$TARGETARCH" in \
 
 USER cibuilder
 
-ENV CIBUILD_RUN_CMD=update
-ENV CIBUILD_UPDATE_ENABLED=1
-ENV CIBUILD_UPDATE_TRIVY_DB=1
+ENV CIBUILD_RUN_CMD=update-caches
+ENV CIBUILD_UPDATE_CACHES_ENABLED=1
+ENV CIBUILD_UPDATE_CACHES_TRIVY_DB=1
 ENV CIBUILDER_ROOTLESS_KIT=0
 ENTRYPOINT ["cibuild_entrypoint.sh"]
 

@@ -31,7 +31,7 @@ The container image that powers [cibuild](https://github.com/stack4ops/cibuild) 
 | `test-docker` | `test` | base + docker CLI | Test with Docker backend |
 | `test-k8s` | `test` | base + kubectl | Test with Kubernetes backend |
 | `release` | `release` | base + regctl + cosign + trivy | Index assembly, signing, SBOM |
-| `update` | `update` | base + trivy | Scheduled cache updates (trivy DB) |
+| `update-caches` | `update-caches` | base + trivy | Scheduled cache updates (trivy DB) |
 | `all` | `all` | everything | All runs in one — local lab or simple CI |
 
 Each image knows what it does — no `CIBUILD_RUN_CMD` needed in CI. The `all` variant runs all runs sequentially in a single job — the simplest CI setup, recommended unless native multi-arch builds or job-level isolation is required. It accepts `-e CIBUILD_RUN_CMD=build` to run a single step for debugging.
@@ -118,7 +118,7 @@ CIBUILD_NIX_CACHE_TOKEN=...             # optional: cache auth token
 | `cosign` | Keyless and key-based image signing |
 | `trivy` | SBOM (SPDX + CycloneDX) and CVE scanning |
 
-### `update`
+### `update-caches`
 
 | Tool | Purpose |
 |------|---------|
@@ -152,10 +152,10 @@ docker run --rm -v $(pwd):/repo -w /repo \
 docker run --rm -v $(pwd):/repo -w /repo \
   ghcr.io/stack4ops/cibuilder:release
 
-# update run (scheduled cache refresh)
+# update-caches run (scheduled cache refresh)
 docker run --rm \
   -v cibuilder-trivy-cache:/home/cibuilder/.cache/trivy \
-  ghcr.io/stack4ops/cibuilder:update
+  ghcr.io/stack4ops/cibuilder:update-caches
 ```
 
 Override for the `all` variant:
@@ -304,8 +304,8 @@ release:
   image: ghcr.io/stack4ops/cibuilder:release
   script: [/bin/true]
 
-update:
-  image: ghcr.io/stack4ops/cibuilder:update
+update-caches:
+  image: ghcr.io/stack4ops/cibuilder:update-caches
   script: [/bin/true]
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
@@ -323,7 +323,7 @@ Use `build-local.sh` to build all targets into the local Docker image store:
 
 # build a single target
 ./build-local.sh release
-./build-local.sh update
+./build-local.sh update-caches
 ./build-local.sh build-nix
 ```
 
