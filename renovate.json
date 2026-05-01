@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base"
+    "config:recommended"
   ],
   "pinDigests": true,
   "dockerfile": {
@@ -20,7 +20,7 @@
   "prHourlyLimit": 2,
   "packageRules": [
     {
-      "description": "debian base image \u2014 digest updates, always manual review",
+      "description": "debian base image — digest updates, always manual review",
       "matchDatasources": [
         "docker"
       ],
@@ -36,7 +36,7 @@
       "commitMessagePrefix": "fix(base):"
     },
     {
-      "description": "docker CLI \u2014 manual review",
+      "description": "docker CLI — manual review",
       "matchDatasources": [
         "docker"
       ],
@@ -52,7 +52,7 @@
       "commitMessagePrefix": "chore(docker):"
     },
     {
-      "description": "buildkit + rootlesskit \u2014 manual review (kernel-level impact)",
+      "description": "buildkit + rootlesskit — manual review (kernel-level impact)",
       "matchManagers": [
         "custom.regex"
       ],
@@ -68,7 +68,7 @@
       "commitMessagePrefix": "chore(buildkit):"
     },
     {
-      "description": "kaniko \u2014 manual review",
+      "description": "kaniko — manual review",
       "matchDatasources": [
         "docker"
       ],
@@ -84,7 +84,7 @@
       "commitMessagePrefix": "chore(kaniko):"
     },
     {
-      "description": "binary tools (regctl, cosign, trivy) \u2014 manual review (supply chain sensitive)",
+      "description": "binary tools (regctl, cosign, trivy) — manual review (supply chain sensitive)",
       "matchManagers": [
         "custom.regex"
       ],
@@ -96,7 +96,7 @@
       "commitMessagePrefix": "chore(tools):"
     },
     {
-      "description": "nix flake inputs \u2014 auto-merge",
+      "description": "nix flake inputs — auto-merge",
       "matchManagers": [
         "nix"
       ],
@@ -110,7 +110,7 @@
       "commitMessagePrefix": "chore(nix):"
     },
     {
-      "description": "GitHub Actions \u2014 auto-merge",
+      "description": "GitHub Actions — auto-merge",
       "matchManagers": [
         "github-actions"
       ],
@@ -124,26 +124,11 @@
       "commitMessagePrefix": "chore(ci):"
     },
     {
-      "description": "all docker images \u2014 always pin digests",
+      "description": "all docker images — always pin digests",
       "matchDatasources": [
         "docker"
       ],
       "pinDigests": true
-    },
-    {
-      "description": "binfmt \u2014 manual review (QEMU binary, architecture-level impact)",
-      "matchManagers": [
-        "dockerfile"
-      ],
-      "matchPackageNames": [
-        "tonistiigi/binfmt"
-      ],
-      "automerge": false,
-      "labels": [
-        "dependencies",
-        "buildkit"
-      ],
-      "commitMessagePrefix": "chore(buildkit):"
     }
   ],
   "customManagers": [

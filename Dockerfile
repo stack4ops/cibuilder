@@ -7,7 +7,7 @@
 #
 #   base              minimal foundation: curl + git + jq + openssh
 #   check             base + regctl          (layer diff against registry)
-#   build-buildctl    base + buildctl + rootlesskit + runc + binfmt QEMU helpers
+#   build-buildctl    base + buildctl + rootlesskit + runc + buildkit-qemu-*
 #   build-buildx      base + docker CLI + buildx plugin
 #   build-nix         base + nix store
 #   build-kaniko      base + kaniko executor (runs as root)
@@ -26,23 +26,19 @@
 
 # ---- global tool versions — single source of truth, updated by Renovate ----
 # renovate: datasource=github-releases depName=regclient/regclient
-ARG REGCTL_VERSION=0.8.1
+ARG REGCTL_VERSION=0.11.3
 # renovate: datasource=github-releases depName=sigstore/cosign
 ARG COSIGN_VERSION=3.0.6
 # renovate: datasource=github-releases depName=aquasecurity/trivy
 ARG TRIVY_VERSION=0.70.0
 # renovate: datasource=github-releases depName=moby/buildkit
-ARG BUILDKIT_VERSION=0.21.0
+ARG BUILDKIT_VERSION=0.29.0
 # renovate: datasource=github-releases depName=rootless-containers/rootlesskit
 ARG ROOTLESSKIT_VERSION=2.3.5
 
 # ---- external image sources — updated by Renovate ----
 # renovate: datasource=docker
 FROM docker:cli AS dockercli-src
-
-# binfmt QEMU helpers for cross-arch builds (amd64 building arm64 etc.)
-# renovate: datasource=docker
-FROM tonistiigi/binfmt:buildkit-v10.2.1-64@sha256:4cf4c0ad4919b18996362536883de02420c1010654d3c2a2b63e9b72600fa3a9 AS binfmt-src
 
 # renovate: datasource=docker
 FROM martizih/kaniko:v1.27.2 AS kaniko-src
@@ -105,8 +101,10 @@ ENV TMPDIR=/home/cibuilder/.local/tmp
 # BUILDKIT_HOST — default socket path for buildctl client
 ENV BUILDKIT_HOST=unix:///run/user/1000/buildkit/buildkitd.sock
 # buildkitd flags:
-# --root: use home dir, avoids /var/lib/buildkit permission issues
-# --oci-worker-no-process-sandbox: avoids /run/buildkit permission issues on debian
+# --root: must be inside home dir so rootlesskit mount namespace covers it → native overlayfs
+# --oci-worker-no-process-sandbox: required for rootless buildkitd running inside a user namespace
+#   (nested PID namespaces not available in rootless context)
+#   job-level isolation is sufficient — each CI job starts an ephemeral buildkitd
 ENV BUILDKITD_FLAGS="--root=/home/cibuilder/.local/share/buildkit --oci-worker-no-process-sandbox"
 
 RUN groupadd -g 1000 cibuilder \
@@ -114,7 +112,9 @@ RUN groupadd -g 1000 cibuilder \
     # runtime dirs for rootlesskit + buildkitd
     && mkdir -p /run/user/1000 /run/buildkit \
     && chown -R 1000:1000 /run/user/1000 /run/buildkit \
-    # home dirs matching moby/buildkit:rootless layout
+    # home dirs — must exist before rootlesskit starts so the mount namespace covers them
+    # /home/cibuilder/.local/share/buildkit → buildkitd root (overlayfs needs to be inside rootlesskit ns)
+    # /home/cibuilder/.local/tmp           → TMPDIR for rootless context
     && mkdir -p /home/cibuilder/.local/tmp /home/cibuilder/.local/share/buildkit \
     # cache dirs — pre-create so volume mounts work with correct ownership
     && mkdir -p \
@@ -128,13 +128,15 @@ RUN groupadd -g 1000 cibuilder \
     && chmod 700 /home/cibuilder/.ssh \
     && chown -R 1000:1000 /home/cibuilder \
     # subuid/subgid required for rootlesskit user namespace + port-driver
-    && echo "cibuilder:100000:65536" | tee /etc/subuid | tee /etc/subgid
+    # root: entry needed because inside rootlesskit id -u returns 0,
+    # so buildkitd looks for root: when creating nested user namespaces for OCI workers
+    && printf 'cibuilder:100000:65536\nroot:100000:65536\n' | tee /etc/subuid > /etc/subgid
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        ca-certificates \
        curl \
-       fuse3 \
+       fuse-overlayfs \
        git \
        jq \
        netcat-openbsd \
@@ -193,8 +195,13 @@ ENV CIBUILDER_ROOTLESS_KIT=0
 ENTRYPOINT ["cibuild_entrypoint.sh"]
 
 # =============================================================================
-# BUILD-BUILDCTL — base + buildctl + rootlesskit
+# BUILD-BUILDCTL — base + buildctl + rootlesskit + buildkit-qemu-*
 # cibuild -r build with CIBUILD_BUILD_CLIENT=buildctl (default)
+#
+# buildkit-qemu-* binaries come from the official BuildKit release tarball.
+# They enable BuildKit's built-in QEMU emulation for cross-arch builds
+# without requiring binfmt_misc kernel registration.
+# All qemu helpers must live in the same $PATH directory as buildkitd.
 # =============================================================================
 FROM base AS build-buildctl
 
@@ -219,7 +226,9 @@ RUN apt-get update \
     && chmod 0755 /usr/bin/newuidmap /usr/bin/newgidmap \
     && rm -rf /var/lib/apt/lists/*
 
-# buildkit (buildkitd + buildctl) — from GitHub releases, native Linux binary
+# buildkit (buildkitd + buildctl + buildkit-qemu-*) — from GitHub releases
+# buildkit-qemu-* are required for cross-arch builds via BuildKit's built-in
+# QEMU emulation (no binfmt_misc needed). They must be in the same dir as buildkitd.
 RUN case "$TARGETARCH" in \
       amd64) ARCH="amd64" ;; \
       arm64) ARCH="arm64" ;; \
@@ -227,8 +236,15 @@ RUN case "$TARGETARCH" in \
     esac \
     && curl -fsSL \
        "https://github.com/moby/buildkit/releases/download/v${BUILDKIT_VERSION}/buildkit-v${BUILDKIT_VERSION}.linux-${ARCH}.tar.gz" \
-       | tar xz -C /usr/local/bin/ --strip-components=1 bin/buildkitd bin/buildctl \
-    && chmod +x /usr/local/bin/buildkitd /usr/local/bin/buildctl
+       | tar xz -C /usr/local/bin/ --strip-components=1 \
+           --wildcards \
+           bin/buildkitd \
+           bin/buildctl \
+           'bin/buildkit-qemu-*' \
+    && chmod +x /usr/local/bin/buildkitd /usr/local/bin/buildctl \
+    && chmod +x /usr/local/bin/buildkit-qemu-* 2>/dev/null || true \
+    && ls /usr/local/bin/buildkit-qemu-* 2>/dev/null \
+       || echo "WARNING: no buildkit-qemu-* found in tarball — cross-arch builds will require host binfmt_misc"
 
 # rootlesskit — from GitHub releases, native Linux binary
 # arch naming: amd64 → x86_64, arm64 → aarch64
@@ -242,10 +258,6 @@ RUN case "$TARGETARCH" in \
        | tar xz -C /usr/local/bin/ rootlesskit \
     && chmod +x /usr/local/bin/rootlesskit
 
-# binfmt QEMU helpers — enables cross-arch builds (e.g. arm64 on amd64 runner)
-# loongarch64/mips64/mips64el excluded (matching moby/buildkit:rootless filter)
-COPY --from=binfmt-src / /usr/bin/
-
 COPY ./buildctl-daemonless.sh /usr/local/bin/buildctl-daemonless.sh
 RUN chmod 755 /usr/local/bin/buildctl-daemonless.sh
 
@@ -257,7 +269,8 @@ RUN mkdir -p /home/cibuilder/.config/buildkit \
 ENV CIBUILD_RUN_CMD=build
 ENV CIBUILD_BUILD_CLIENT=buildctl
 ENV CIBUILDER_ROOTLESS_KIT=1
-# buildkit state volume — matching moby/buildkit:rootless VOLUME declaration
+# VOLUME ensures Docker creates a fresh anonymous volume with its own filesystem
+# for the buildkit root — avoids overlay-on-overlay issues with fuse-overlayfs
 VOLUME /home/cibuilder/.local/share/buildkit
 ENTRYPOINT ["cibuild_entrypoint.sh"]
 
@@ -535,7 +548,9 @@ RUN case "$TARGETARCH" in \
        > /usr/local/bin/kubectl \
     && chmod +x /usr/local/bin/kubectl
 
-# buildkit (buildkitd + buildctl) — from GitHub releases, native Linux binary
+# buildkit (buildkitd + buildctl + buildkit-qemu-*) — from GitHub releases
+# buildkit-qemu-* are required for cross-arch builds via BuildKit's built-in
+# QEMU emulation (no binfmt_misc needed). They must be in the same dir as buildkitd.
 ARG BUILDKIT_VERSION
 RUN case "$TARGETARCH" in \
       amd64) ARCH="amd64" ;; \
@@ -544,8 +559,15 @@ RUN case "$TARGETARCH" in \
     esac \
     && curl -fsSL \
        "https://github.com/moby/buildkit/releases/download/v${BUILDKIT_VERSION}/buildkit-v${BUILDKIT_VERSION}.linux-${ARCH}.tar.gz" \
-       | tar xz -C /usr/local/bin/ --strip-components=1 bin/buildkitd bin/buildctl \
-    && chmod +x /usr/local/bin/buildkitd /usr/local/bin/buildctl
+       | tar xz -C /usr/local/bin/ --strip-components=1 \
+           --wildcards \
+           bin/buildkitd \
+           bin/buildctl \
+           'bin/buildkit-qemu-*' \
+    && chmod +x /usr/local/bin/buildkitd /usr/local/bin/buildctl \
+    && chmod +x /usr/local/bin/buildkit-qemu-* 2>/dev/null || true \
+    && ls /usr/local/bin/buildkit-qemu-* 2>/dev/null \
+       || echo "WARNING: no buildkit-qemu-* found in tarball — cross-arch builds will require host binfmt_misc"
 
 # rootlesskit — from GitHub releases, native Linux binary
 ARG ROOTLESSKIT_VERSION
@@ -558,9 +580,6 @@ RUN case "$TARGETARCH" in \
        "https://github.com/rootless-containers/rootlesskit/releases/download/v${ROOTLESSKIT_VERSION}/rootlesskit-${ARCH}.tar.gz" \
        | tar xz -C /usr/local/bin/ rootlesskit \
     && chmod +x /usr/local/bin/rootlesskit
-
-# binfmt QEMU helpers — enables cross-arch builds (e.g. arm64 on amd64 runner)
-COPY --from=binfmt-src / /usr/bin/
 
 COPY ./buildctl-daemonless.sh /usr/local/bin/buildctl-daemonless.sh
 RUN chmod 755 /usr/local/bin/buildctl-daemonless.sh
@@ -588,4 +607,7 @@ RUN mkdir -p /home/cibuilder/.config/buildkit \
 
 ENV CIBUILD_RUN_CMD=all
 ENV CIBUILDER_ROOTLESS_KIT=1
+# VOLUME ensures Docker creates a fresh anonymous volume with its own filesystem
+# for the buildkit root — avoids overlay-on-overlay issues with fuse-overlayfs
+VOLUME /home/cibuilder/.local/share/buildkit
 ENTRYPOINT ["cibuild_entrypoint.sh"]

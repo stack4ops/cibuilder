@@ -16,6 +16,7 @@ fi
 for target in $TARGETS; do
   echo "==> building target: ${target}"
   docker buildx build \
+    --build-arg FORCE_DOWNLOAD_CIBUILD=$(date +%s) \
     --target "${target}" \
     --tag "localhost/cibuilder:${target}" \
     --load \

@@ -32,9 +32,9 @@ The container image that powers [cibuild](https://github.com/stack4ops/cibuild) 
 | `test-k8s` | `test` | base + kubectl | Test with Kubernetes backend |
 | `release` | `release` | base + regctl + cosign + trivy | Index assembly, signing, SBOM |
 | `update` | `update` | base + trivy | Scheduled cache updates (trivy DB) |
-| `all` | `all` | everything | Local lab / development |
+| `all` | `all` | everything | All runs in one — CI default for simple setups or local lab |
 
-Each image knows what it does — no `CIBUILD_RUN_CMD` needed in CI. The `all` variant accepts an override via `-e CIBUILD_RUN_CMD=build` for debugging.
+Each image knows what it does — no `CIBUILD_RUN_CMD` needed in CI. The `all` variant runs all four runs sequentially in a single job — the simplest CI setup, recommended unless native multi-arch builds or job-level isolation is required. It accepts `-e CIBUILD_RUN_CMD=build` to run a single step for debugging.
 
 All variants share the same `debian:13-slim` foundation. Base image and tool versions are pinned and updated automatically via [Renovate](renovate.json).
 

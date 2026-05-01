@@ -8,6 +8,9 @@
 # The script is compatible with BusyBox shell.
 set -eu
 
+# cibuild patch
+ls -lat "$CIBUILD_LIB_PATH/env.sh"
+
 : ${BUILDCTL=buildctl}
 : ${BUILDCTL_CONNECT_RETRIES_MAX=10}
 : ${BUILDKITD=buildkitd}
@@ -15,11 +18,21 @@ set -eu
 : ${ROOTLESSKIT=rootlesskit}
 
 cleanup() {
-  if [ -f "$tmp/pid" ]; then
-    pid=$(cat "$tmp/pid")
-    kill "$pid" 2>/dev/null || true
-  fi
-  rm -rf "$tmp"
+    if [ -f "$tmp/pid" ]; then
+        pid=$(cat "$tmp/pid")
+        kill "$pid" 2>/dev/null || true
+    fi
+
+    # dump buildkitd log only at CIBUILD_LOG_LEVEL >= 3 (dump)
+    if [ "${CIBUILD_LOG_LEVEL:-0}" -ge 3 ] && [ -f "$tmp/log" ] && [ -s "$tmp/log" ]; then
+        printf '\033[35m========== buildkitd log ==========\033[0m\n' >&2
+        while IFS= read -r line; do
+            printf '\033[35m%s\033[0m\n' "$line" >&2
+        done < "$tmp/log"
+        printf '\033[35m====================================\033[0m\n' >&2
+    fi
+
+    rm -rf "$tmp"
 }
 
 # $tmp holds the following files:
@@ -65,6 +78,7 @@ waitForBuildkitd() {
         try=$(expr $try + 1)
     done
 }
+
 startBuildkitd
 waitForBuildkitd
 $BUILDCTL --addr=$(cat $tmp/addr) "$@"
