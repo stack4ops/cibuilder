@@ -26,15 +26,15 @@ The container image that powers [cibuild](https://github.com/stack4ops/cibuild) 
 | `check` | `check` | base + regctl | Layer diff against registry |
 | `build-buildctl` | `build` | base + buildctl + rootlesskit | Default CI — daemonless BuildKit |
 | `build-buildx` | `build` | base + docker CLI + buildx | Docker-based builds |
-| `build-nix` | `build` | base + nix | Declarative, reproducible builds |
+| `build-nix` | `build` | base + nix | Declarative, reproducible builds via Nix flakes |
 | `build-kaniko` | `build` | base + kaniko executor | Rootless Kubernetes builds |
 | `test-docker` | `test` | base + docker CLI | Test with Docker backend |
 | `test-k8s` | `test` | base + kubectl | Test with Kubernetes backend |
 | `release` | `release` | base + regctl + cosign + trivy | Index assembly, signing, SBOM |
 | `update` | `update` | base + trivy | Scheduled cache updates (trivy DB) |
-| `all` | `all` | everything | All runs in one — CI default for simple setups or local lab |
+| `all` | `all` | everything | All runs in one — local lab or simple CI |
 
-Each image knows what it does — no `CIBUILD_RUN_CMD` needed in CI. The `all` variant runs all four runs sequentially in a single job — the simplest CI setup, recommended unless native multi-arch builds or job-level isolation is required. It accepts `-e CIBUILD_RUN_CMD=build` to run a single step for debugging.
+Each image knows what it does — no `CIBUILD_RUN_CMD` needed in CI. The `all` variant runs all runs sequentially in a single job — the simplest CI setup, recommended unless native multi-arch builds or job-level isolation is required. It accepts `-e CIBUILD_RUN_CMD=build` to run a single step for debugging.
 
 All variants share the same `debian:13-slim` foundation. Base image and tool versions are pinned and updated automatically via [Renovate](renovate.json).
 
@@ -49,7 +49,7 @@ All variants share the same `debian:13-slim` foundation. Base image and tool ver
 ### All variants
 
 | Tool | Purpose |
-|------|---------|
+|------|---------| 
 | `curl`, `git`, `jq`, `openssh` | General pipeline tooling |
 
 ### `check`
@@ -66,6 +66,7 @@ All variants share the same `debian:13-slim` foundation. Base image and tool ver
 | `rootlesskit` | User namespace setup for daemonless BuildKit |
 | `buildctl-daemonless.sh` | Runs ephemeral BuildKit inline — no separate daemon |
 | `newuidmap`, `newgidmap` | UID/GID mapping for rootless operation (via `uidmap` apt package + `setcap`) |
+| `buildkit-qemu-*` | Built-in QEMU helpers for cross-arch builds — no binfmt_misc needed |
 
 ### `build-buildx`
 
@@ -78,7 +79,18 @@ All variants share the same `debian:13-slim` foundation. Base image and tool ver
 
 | Tool | Purpose |
 |------|---------|
-| `nix` | Nix single-user installation with flakes enabled |
+| `nix` | Single-user Nix installation with flakes enabled |
+
+The `build-nix` variant ships Nix pre-installed at `/nix` with flakes and the `nix-command` experimental feature enabled. It builds OCI images directly from a `flake.nix` using `nixpkgs.dockerTools` — no Dockerfile, no BuildKit daemon, no `--privileged` flag. Sandbox mode is auto-detected at runtime via `ROOTLESSKIT_PID`.
+
+Configure in your repo's `cibuild.env`:
+
+```sh
+CIBUILD_BUILD_CLIENT=nix
+CIBUILD_NIX_FLAKE_ATTR=default          # packages.<system>.default in flake.nix
+CIBUILD_NIX_CACHE_URL=https://...       # optional: Attic/Cachix binary cache URL
+CIBUILD_NIX_CACHE_TOKEN=...             # optional: cache auth token
+```
 
 ### `build-kaniko`
 
@@ -127,19 +139,24 @@ Each image has `CIBUILD_RUN_CMD` hardcoded — just run it:
 docker run --rm -v $(pwd):/repo -w /repo \
   ghcr.io/stack4ops/cibuilder:check
 
-# build run (buildctl)
-docker run --rm --privileged -v $(pwd):/repo -w /repo \
+# build run (buildctl — daemonless, rootless)
+docker run --rm --security-opt seccomp=unconfined \
+  -v $(pwd):/repo -w /repo \
   ghcr.io/stack4ops/cibuilder:build-buildctl
+
+# build run (nix — no daemon, no --privileged)
+docker run --rm -v $(pwd):/repo -w /repo \
+  ghcr.io/stack4ops/cibuilder:build-nix
 
 # release run
 docker run --rm -v $(pwd):/repo -w /repo \
   ghcr.io/stack4ops/cibuilder:release
-```
 
 # update run (scheduled cache refresh)
 docker run --rm \
   -v cibuilder-trivy-cache:/home/cibuilder/.cache/trivy \
   ghcr.io/stack4ops/cibuilder:update
+```
 
 Override for the `all` variant:
 
@@ -168,15 +185,6 @@ Runs as `cibuilder` (uid 1000) without rootlesskit. Sandbox mode is auto-detecte
 CIBUILDER_ROOTLESS_KIT=0
 CIBUILDER_USER="1000:$(id -g)"
 CIBUILDER_PRIVILEGED=0
-```
-
-Configure in your repo's `cibuild.env`:
-
-```sh
-CIBUILD_BUILD_CLIENT=nix
-CIBUILD_NIX_FLAKE_ATTR=default        # packages.<system>.default in flake.nix
-CIBUILD_NIX_CACHE_URL=https://...     # optional: Attic/Cachix binary cache URL
-CIBUILD_NIX_CACHE_TOKEN=...           # optional: cache auth token
 ```
 
 ### build-kaniko
@@ -225,10 +233,10 @@ cert.json                         # cosign keyless certificate
 Configure via `cibuild.env`:
 
 ```sh
-CIBUILD_RELEASE_SBOM=1                          # default: 1
+CIBUILD_RELEASE_SBOM=1                             # default: 1
 CIBUILD_RELEASE_SBOM_FORMATS=spdx-json,cyclonedx  # default: both
-CIBUILD_RELEASE_VULN=1                          # default: 1
-CIBUILD_RELEASE_VULN_FORMAT=json                # default: json
+CIBUILD_RELEASE_VULN=1                             # default: 1
+CIBUILD_RELEASE_VULN_FORMAT=json                   # default: json
 CIBUILD_RELEASE_UPLOAD_SUPPLY_CHAIN_ARTIFACTS=package  # GitLab: upload to Generic Package Registry
 ```
 
@@ -276,6 +284,14 @@ build-arm64:
   image: ghcr.io/stack4ops/cibuilder:build-buildctl
   script: [/bin/true]
   tags: [saas-linux-medium-arm64]
+
+build-nix-amd64:
+  image: ghcr.io/stack4ops/cibuilder:build-nix
+  script: [/bin/true]
+  variables:
+    CIBUILD_BUILD_CLIENT: nix
+    CIBUILD_NIX_FLAKE_ATTR: default
+  tags: [saas-linux-medium-amd64]
 
 test:
   image: ghcr.io/stack4ops/cibuilder:test-docker
