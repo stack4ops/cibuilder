@@ -3,6 +3,7 @@
   "extends": [
     "config:recommended"
   ],
+  "configMigration": true,
   "pinDigests": true,
   "dockerfile": {
     "enabled": true
