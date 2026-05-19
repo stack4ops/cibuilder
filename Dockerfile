@@ -29,59 +29,38 @@
 # =============================================================================
 
 # ---- global tool versions — single source of truth, updated by Renovate ----
-# renovate: datasource=github-releases depName=regclient/regclient
-ARG REGCTL_VERSION=0.11.3
-# renovate: datasource=github-releases depName=sigstore/cosign
-ARG COSIGN_VERSION=3.0.6
-# renovate: datasource=github-releases depName=aquasecurity/trivy
-ARG TRIVY_VERSION=0.70.0
-# renovate: datasource=github-releases depName=moby/buildkit
-ARG BUILDKIT_VERSION=0.29.0
-# renovate: datasource=github-releases depName=rootless-containers/rootlesskit
-ARG ROOTLESSKIT_VERSION=2.3.5
-# renovate: datasource=github-tags depName=kubernetes/kubernetes
-ARG KUBECTL_VERSION=1.36.1
+
+ARG REGCTL_VERSION=0.11.3 # renovate: datasource=github-releases depName=regclient/regclient
+ARG COSIGN_VERSION=3.0.6 # renovate: datasource=github-releases depName=sigstore/cosign
+ARG TRIVY_VERSION=0.70.0 # renovate: datasource=github-releases depName=aquasecurity/trivy
+ARG BUILDKIT_VERSION=0.29.0 # renovate: datasource=github-releases depName=moby/buildkit
+ARG ROOTLESSKIT_VERSION=2.3.5 # renovate: datasource=github-releases depName=rootless-containers/rootlesskit
+ARG KUBECTL_VERSION=1.36.1 # renovate: datasource=github-tags depName=kubernetes/kubernetes
 
 # ---- debian packages — updated by Renovate ----
-# renovate: suite=trixie depName=ca-certificates
-ARG CA_CERTIFICATES_VERSION=20250419
-# renovate: suite=trixie depName=curl
-ARG CURL_VERSION=8.14.1-2+deb13u3
-# renovate: suite=trixie depName=xz-utils
-ARG XZ_UTILS_VERSION=5.8.1-1
-# renovate: suite=trixie depName=gzip
-ARG GZIP_VERSION=1.13-1
-# renovate: suite=trixie depName=libcap2-bin
-ARG LIBCAP2_BIN_VERSION=1:2.75-10+deb13u1+b1
-# renovate: suite=trixie depName=runc
-ARG RUNC_VERSION=1.1.15+ds1-2+b4
-# renovate: suite=trixie depName=uidmap
-ARG UIDMAP_VERSION=1:4.17.4-2
-# renovate: suite=trixie depName=fuse-overlayfs
-ARG FUSE_OVERLAYFS_VERSION=1.14-1+b1
-# renovate: suite=trixie depName=git
-ARG GIT_VERSION=1:2.47.3-0+deb13u1
-# renovate: suite=trixie depName=jq
-ARG JQ_VERSION=1.7.1-6+deb13u2
-# renovate: suite=trixie depName=netcat-openbsd
-ARG NETCAT_VERSION=1.229-1
-# renovate: suite=trixie depName=openssh-client
-ARG OPENSSH_CLIENT_VERSION=1:10.0p1-7+deb13u4
-# renovate: suite=trixie depName=pigz
-ARG PIGZ_VERSION=2.8-1
+ARG CA_CERTIFICATES_VERSION=20250419 # renovate: suite=trixie depName=ca-certificates
+ARG CURL_VERSION=8.14.1-2+deb13u3 # renovate: suite=trixie depName=curl
+ARG XZ_UTILS_VERSION=5.8.1-1 # renovate: suite=trixie depName=xz-utils
+ARG GZIP_VERSION=1.13-1 # renovate: suite=trixie depName=gzip
+ARG LIBCAP2_BIN_VERSION=1:2.75-10+deb13u1+b1 # renovate: suite=trixie depName=libcap2-bin
+ARG RUNC_VERSION=1.1.15+ds1-2+b4 # renovate: suite=trixie depName=runc
+ARG UIDMAP_VERSION=1:4.17.4-2 # renovate: suite=trixie depName=uidmap
+ARG FUSE_OVERLAYFS_VERSION=1.14-1+b1 # renovate: suite=trixie depName=fuse-overlayfs
+ARG GIT_VERSION=1:2.47.3-0+deb13u1 # renovate: suite=trixie depName=git
+ARG JQ_VERSION=1.7.1-6+deb13u2 # renovate: suite=trixie depName=jq
+ARG NETCAT_VERSION=1.229-1 # renovate: suite=trixie depName=netcat-openbsd
+ARG OPENSSH_CLIENT_VERSION=1:10.0p1-7+deb13u4 # renovate: suite=trixie depName=openssh-client
+ARG PIGZ_VERSION=2.8-1 # renovate: suite=trixie depName=pigz
 
 # ---- external image sources — updated by Renovate ----
-# renovate: datasource=docker
-FROM docker:cli AS dockercli-src
-# renovate: datasource=docker
-FROM martizih/kaniko:v1.27.2 AS kaniko-src
+FROM docker:cli AS dockercli-src # renovate: datasource=docker
+FROM martizih/kaniko:v1.27.2 AS kaniko-src # renovate: datasource=docker
 
 # =============================================================================
 # NIX INSTALLER — installs nix single-user as uid 1000
 # Uses ZenDiS base only for the installer stage — nix install needs curl + xz
 # =============================================================================
 
-# renovate: datasource=docker
 FROM docker.io/library/debian:13-slim@sha256:109e2c65005bf160609e4ba6acf7783752f8502ad218e298253428690b9eaa4b AS nix-installer
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -120,7 +99,6 @@ RUN mkdir -p /home/cibuilder/.config/nix \
 # No build tools, no docker CLI, no registry tools
 # =============================================================================
 
-# renovate: datasource=docker
 FROM docker.io/library/debian:13-slim@sha256:109e2c65005bf160609e4ba6acf7783752f8502ad218e298253428690b9eaa4b AS base
 
 LABEL org.opencontainers.image.source="https://github.com/stack4ops/cibuilder"
@@ -340,8 +318,7 @@ COPY --from=nix-installer --chown=1000:1000 /nix                         /nix
 COPY --from=nix-installer --chown=1000:1000 /home/cibuilder/.nix-profile /home/cibuilder/.nix-profile
 COPY --from=nix-installer --chown=1000:1000 /home/cibuilder/.config/nix  /home/cibuilder/.config/nix
 
-# renovate: datasource=nix depName=attic-client
-ARG NIX_ATTIC_CHANNEL=nixpkgs-unstable
+ARG NIX_ATTIC_CHANNEL=nixpkgs-unstable # renovate: datasource=nix depName=attic-client
 RUN mkdir -p /root/.config/nix \
   && echo "build-users-group =" > /root/.config/nix/nix.conf \
   && HOME=/root \
@@ -404,6 +381,7 @@ ENTRYPOINT ["cibuild_entrypoint.sh"]
 FROM base AS test-k8s
 
 ARG TARGETARCH
+ARG KUBECTL_VERSION
 
 USER root
 
@@ -512,6 +490,7 @@ ARG COSIGN_VERSION
 ARG TRIVY_VERSION
 ARG BUILDKIT_VERSION
 ARG ROOTLESSKIT_VERSION
+ARG KUBECTL_VERSION
 
 ARG LIBCAP2_BIN_VERSION
 ARG RUNC_VERSION
@@ -564,11 +543,11 @@ RUN case "$TARGETARCH" in \
       amd64) ARCH="amd64" ;; \
       arm64) ARCH="arm64" ;; \
       *) echo "Unsupported TARGETARCH: $TARGETARCH"; exit 1 ;; \
-    esac \
-    && curl -fsSL \
-       "https://dl.k8s.io/release/$(curl -fsSL https://dl.k8s.io/release/stable.txt)/bin/linux/${ARCH}/kubectl" \
-       > /usr/local/bin/kubectl \
-    && chmod +x /usr/local/bin/kubectl
+   esac \
+   && curl -fsSL \
+      "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/${ARCH}/kubectl" \
+      > /usr/local/bin/kubectl \
+   && chmod +x /usr/local/bin/kubectl
 
 RUN case "$TARGETARCH" in \
       amd64) ARCH="amd64" ;; \
@@ -610,8 +589,7 @@ COPY --from=nix-installer --chown=1000:1000 /nix                         /nix
 COPY --from=nix-installer --chown=1000:1000 /home/cibuilder/.nix-profile /home/cibuilder/.nix-profile
 COPY --from=nix-installer --chown=1000:1000 /home/cibuilder/.config/nix  /home/cibuilder/.config/nix
 
-# renovate: datasource=nix depName=attic-client
-ARG NIX_ATTIC_CHANNEL=nixpkgs-unstable
+ARG NIX_ATTIC_CHANNEL=nixpkgs-unstable # renovate: datasource=nix depName=attic-client
 RUN mkdir -p /root/.config/nix \
   && echo "build-users-group =" > /root/.config/nix/nix.conf \
   && HOME=/root \
