@@ -263,6 +263,19 @@
       ],
       "registryUrlTemplate": "https://deb.debian.org/debian?suite={{suite}}&components=main,contrib,non-free&binaryArch=amd64",
       "datasourceTemplate": "deb"
+    },
+    {
+      "description": "apt packages — debian security repo (+debXuY patches)",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)Dockerfile$/",
+        "/(^|/)Containerfile$/"
+      ],
+      "matchStrings": [
+        "ARG [A-Z0-9_]+=(?<currentValue>[^\\s]+)\\s+# renovate: suite=(?<suite>[a-z]+) depName=(?<depName>[a-zA-Z0-9.+_-]+)"
+      ],
+      "registryUrlTemplate": "https://deb.debian.org/debian-security?suite={{suite}}-security&components=main,contrib,non-free&binaryArch=amd64",
+      "datasourceTemplate": "deb"
     }
   ],
   "labels": [
