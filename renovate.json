@@ -22,84 +22,146 @@
   "packageRules": [
     {
       "description": "debian base image — pin to 13-slim, digest updates only",
-      "matchDatasources": ["docker"],
-      "matchPackageNames": ["debian"],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "debian"
+      ],
       "versioning": "docker",
       "allowedVersions": "/^13-slim/",
       "automerge": false,
-      "labels": ["dependencies", "base-image"],
+      "labels": [
+        "dependencies",
+        "base-image"
+      ],
       "commitMessagePrefix": "fix(base):"
     },
     {
       "description": "docker CLI — manual review",
-      "matchDatasources": ["docker"],
-      "matchPackageNames": ["docker"],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "docker"
+      ],
       "versioning": "semver",
       "automerge": false,
-      "labels": ["dependencies", "docker"],
+      "labels": [
+        "dependencies",
+        "docker"
+      ],
       "commitMessagePrefix": "chore(docker):"
     },
     {
       "description": "buildkit + rootlesskit — manual review (kernel-level impact)",
-      "matchManagers": ["custom.regex"],
-      "matchPackageNames": ["moby/buildkit", "rootless-containers/rootlesskit"],
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchPackageNames": [
+        "moby/buildkit",
+        "rootless-containers/rootlesskit"
+      ],
       "automerge": false,
-      "labels": ["dependencies", "buildkit"],
+      "labels": [
+        "dependencies",
+        "buildkit"
+      ],
       "commitMessagePrefix": "chore(buildkit):"
     },
     {
       "description": "kaniko — manual review",
-      "matchDatasources": ["docker"],
-      "matchPackageNames": ["martizih/kaniko"],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "martizih/kaniko"
+      ],
       "versioning": "semver",
       "automerge": false,
-      "labels": ["dependencies", "kaniko"],
+      "labels": [
+        "dependencies",
+        "kaniko"
+      ],
       "commitMessagePrefix": "chore(kaniko):"
     },
     {
       "description": "binary tools (regctl, cosign, trivy) — manual review (supply chain sensitive)",
-      "matchManagers": ["custom.regex"],
-      "matchPackageNames": ["regclient/regclient", "sigstore/cosign", "aquasecurity/trivy"],
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchPackageNames": [
+        "regclient/regclient",
+        "sigstore/cosign",
+        "aquasecurity/trivy"
+      ],
       "automerge": false,
-      "labels": ["dependencies", "tools"],
+      "labels": [
+        "dependencies",
+        "tools"
+      ],
       "commitMessagePrefix": "chore(tools):"
     },
     {
       "description": "kubectl — manual review (k8s version skew policy)",
-      "matchManagers": ["custom.regex"],
-      "matchPackageNames": ["kubernetes/kubernetes"],
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchPackageNames": [
+        "kubernetes/kubernetes"
+      ],
       "automerge": false,
-      "labels": ["dependencies", "kubectl"],
+      "labels": [
+        "dependencies",
+        "kubectl"
+      ],
       "commitMessagePrefix": "chore(kubectl):"
     },
     {
       "description": "apt packages — manual review",
-      "matchDatasources": ["deb"],
+      "matchDatasources": [
+        "deb"
+      ],
       "automerge": false,
-      "labels": ["dependencies", "apt"],
+      "labels": [
+        "dependencies",
+        "apt"
+      ],
       "commitMessagePrefix": "chore(apt):"
     },
     {
       "description": "nix flake inputs — auto-merge",
-      "matchManagers": ["nix"],
+      "matchManagers": [
+        "nix"
+      ],
       "automerge": true,
       "automergeType": "pr",
       "automergeStrategy": "squash",
-      "labels": ["dependencies", "nix"],
+      "labels": [
+        "dependencies",
+        "nix"
+      ],
       "commitMessagePrefix": "chore(nix):"
     },
     {
       "description": "GitHub Actions — auto-merge",
-      "matchManagers": ["github-actions"],
+      "matchManagers": [
+        "github-actions"
+      ],
       "automerge": true,
       "automergeType": "pr",
       "automergeStrategy": "squash",
-      "labels": ["dependencies", "ci"],
+      "labels": [
+        "dependencies",
+        "ci"
+      ],
       "commitMessagePrefix": "chore(ci):"
     },
     {
       "description": "all docker images — always pin digests",
-      "matchDatasources": ["docker"],
+      "matchDatasources": [
+        "docker"
+      ],
       "pinDigests": true
     }
   ],
@@ -107,7 +169,10 @@
     {
       "description": "regctl ARG version in Dockerfile",
       "customType": "regex",
-      "managerFilePatterns": ["/(^|/)Dockerfile$/", "/(^|/)Containerfile$/"],
+      "managerFilePatterns": [
+        "/(^|/)Dockerfile$/",
+        "/(^|/)Containerfile$/"
+      ],
       "matchStrings": [
         "ARG REGCTL_VERSION=(?<currentValue>[\\d.]+)\\s+# renovate: datasource=github-releases depName=regclient/regclient"
       ],
@@ -118,7 +183,10 @@
     {
       "description": "cosign ARG version in Dockerfile",
       "customType": "regex",
-      "managerFilePatterns": ["/(^|/)Dockerfile$/", "/(^|/)Containerfile$/"],
+      "managerFilePatterns": [
+        "/(^|/)Dockerfile$/",
+        "/(^|/)Containerfile$/"
+      ],
       "matchStrings": [
         "ARG COSIGN_VERSION=(?<currentValue>[\\d.]+)\\s+# renovate: datasource=github-releases depName=sigstore/cosign"
       ],
@@ -129,7 +197,10 @@
     {
       "description": "trivy ARG version in Dockerfile",
       "customType": "regex",
-      "managerFilePatterns": ["/(^|/)Dockerfile$/", "/(^|/)Containerfile$/"],
+      "managerFilePatterns": [
+        "/(^|/)Dockerfile$/",
+        "/(^|/)Containerfile$/"
+      ],
       "matchStrings": [
         "ARG TRIVY_VERSION=(?<currentValue>[\\d.]+)\\s+# renovate: datasource=github-releases depName=aquasecurity/trivy"
       ],
@@ -140,7 +211,10 @@
     {
       "description": "buildkit ARG version in Dockerfile",
       "customType": "regex",
-      "managerFilePatterns": ["/(^|/)Dockerfile$/", "/(^|/)Containerfile$/"],
+      "managerFilePatterns": [
+        "/(^|/)Dockerfile$/",
+        "/(^|/)Containerfile$/"
+      ],
       "matchStrings": [
         "ARG BUILDKIT_VERSION=(?<currentValue>[\\d.]+)\\s+# renovate: datasource=github-releases depName=moby/buildkit"
       ],
@@ -151,7 +225,10 @@
     {
       "description": "rootlesskit ARG version in Dockerfile",
       "customType": "regex",
-      "managerFilePatterns": ["/(^|/)Dockerfile$/", "/(^|/)Containerfile$/"],
+      "managerFilePatterns": [
+        "/(^|/)Dockerfile$/",
+        "/(^|/)Containerfile$/"
+      ],
       "matchStrings": [
         "ARG ROOTLESSKIT_VERSION=(?<currentValue>[\\d.]+)\\s+# renovate: datasource=github-releases depName=rootless-containers/rootlesskit"
       ],
@@ -162,7 +239,10 @@
     {
       "description": "kubectl ARG version in Dockerfile",
       "customType": "regex",
-      "managerFilePatterns": ["/(^|/)Dockerfile$/", "/(^|/)Containerfile$/"],
+      "managerFilePatterns": [
+        "/(^|/)Dockerfile$/",
+        "/(^|/)Containerfile$/"
+      ],
       "matchStrings": [
         "ARG KUBECTL_VERSION=(?<currentValue>[\\d.]+)\\s+# renovate: datasource=github-tags depName=kubernetes/kubernetes"
       ],
@@ -174,23 +254,18 @@
     {
       "description": "apt packages — debian main repo",
       "customType": "regex",
-      "managerFilePatterns": ["/(^|/)Dockerfile$/", "/(^|/)Containerfile$/"],
+      "managerFilePatterns": [
+        "/(^|/)Dockerfile$/",
+        "/(^|/)Containerfile$/"
+      ],
       "matchStrings": [
         "ARG [A-Z0-9_]+=(?<currentValue>[^\\s]+)\\s+# renovate: suite=(?<suite>[a-z]+) depName=(?<depName>[a-zA-Z0-9.+_-]+)"
       ],
       "registryUrlTemplate": "https://deb.debian.org/debian?suite={{suite}}&components=main,contrib,non-free&binaryArch=amd64",
       "datasourceTemplate": "deb"
-    },
-    {
-      "description": "apt packages — debian security repo (+debXuY patches)",
-      "customType": "regex",
-      "managerFilePatterns": ["/(^|/)Dockerfile$/", "/(^|/)Containerfile$/"],
-      "matchStrings": [
-        "ARG [A-Z0-9_]+=(?<currentValue>[^\\s]+)\\s+# renovate: suite=(?<suite>[a-z]+) depName=(?<depName>[a-zA-Z0-9.+_-]+)"
-      ],
-      "registryUrlTemplate": "https://security.debian.org/debian-security?suite={{suite}}-security&components=main,contrib,non-free&binaryArch=amd64",
-      "datasourceTemplate": "deb"
     }
   ],
-  "labels": ["renovate"]
+  "labels": [
+    "renovate"
+  ]
 }
