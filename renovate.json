@@ -173,8 +173,8 @@
       "description": "regctl ARG version in Dockerfile",
       "customType": "regex",
       "managerFilePatterns": [
-        "(^|/)Dockerfile$",
-        "(^|/)Containerfile$"
+        "/(^|/)Dockerfile$/",
+        "/(^|/)Containerfile$/"
       ],
       "matchStrings": [
         "datasource=github-releases depName=regclient/regclient\\s+ARG REGCTL_VERSION=(?<currentValue>[\\d.]+)"
@@ -187,8 +187,8 @@
       "description": "cosign ARG version in Dockerfile",
       "customType": "regex",
       "managerFilePatterns": [
-        "(^|/)Dockerfile$",
-        "(^|/)Containerfile$"
+        "/(^|/)Dockerfile$/",
+        "/(^|/)Containerfile$/"
       ],
       "matchStrings": [
         "datasource=github-releases depName=sigstore/cosign\\s+ARG COSIGN_VERSION=(?<currentValue>[\\d.]+)"
@@ -201,8 +201,8 @@
       "description": "trivy ARG version in Dockerfile",
       "customType": "regex",
       "managerFilePatterns": [
-        "(^|/)Dockerfile$",
-        "(^|/)Containerfile$"
+        "/(^|/)Dockerfile$/",
+        "/(^|/)Containerfile$/"
       ],
       "matchStrings": [
         "datasource=github-releases depName=aquasecurity/trivy\\s+ARG TRIVY_VERSION=(?<currentValue>[\\d.]+)"
@@ -215,8 +215,8 @@
       "description": "buildkit ARG version in Dockerfile",
       "customType": "regex",
       "managerFilePatterns": [
-        "(^|/)Dockerfile$",
-        "(^|/)Containerfile$"
+        "/(^|/)Dockerfile$/",
+        "/(^|/)Containerfile$/"
       ],
       "matchStrings": [
         "datasource=github-releases depName=moby/buildkit\\s+ARG BUILDKIT_VERSION=(?<currentValue>[\\d.]+)"
@@ -229,8 +229,8 @@
       "description": "rootlesskit ARG version in Dockerfile",
       "customType": "regex",
       "managerFilePatterns": [
-        "(^|/)Dockerfile$",
-        "(^|/)Containerfile$"
+        "/(^|/)Dockerfile$/",
+        "/(^|/)Containerfile$/"
       ],
       "matchStrings": [
         "datasource=github-releases depName=rootless-containers/rootlesskit\\s+ARG ROOTLESSKIT_VERSION=(?<currentValue>[\\d.]+)"
@@ -243,8 +243,8 @@
       "description": "kubectl ARG version in Dockerfile",
       "customType": "regex",
       "managerFilePatterns": [
-        "(^|/)Dockerfile$",
-        "(^|/)Containerfile$"
+        "/(^|/)Dockerfile$/",
+        "/(^|/)Containerfile$/"
       ],
       "matchStrings": [
         "datasource=github-tags depName=kubernetes/kubernetes\\s+ARG KUBECTL_VERSION=(?<currentValue>[\\d.]+)"
@@ -258,8 +258,8 @@
       "description": "apt packages \u2014 debian main repo (trixie)",
       "customType": "regex",
       "managerFilePatterns": [
-        "(^|/)Dockerfile$",
-        "(^|/)Containerfile$"
+        "/(^|/)Dockerfile$/",
+        "/(^|/)Containerfile$/"
       ],
       "matchStrings": [
         "# renovate: suite=(?<suite>[a-z]+) depName=(?<depName>[a-zA-Z0-9.+_-]+)\\s+ARG [A-Z0-9_]+=(?<currentValue>[^\\s]+)"
@@ -271,8 +271,8 @@
       "description": "apt packages \u2014 debian security repo (trixie +debXuY patches)",
       "customType": "regex",
       "managerFilePatterns": [
-        "(^|/)Dockerfile$",
-        "(^|/)Containerfile$"
+        "/(^|/)Dockerfile$/",
+        "/(^|/)Containerfile$/"
       ],
       "matchStrings": [
         "# renovate: suite=(?<suite>[a-z]+) depName=(?<depName>[a-zA-Z0-9.+_-]+)\\s+ARG [A-Z0-9_]+=(?<currentValue>[^\\s]+)"
